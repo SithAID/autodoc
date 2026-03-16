@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoDoc — Blog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Exo+2:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07090e;--panel:#0c1220;--surface:#101828;--raised:#162234;
+  --b1:#1e3048;--b2:#2a4468;
+  --amber:#00d4ff;--amber2:#0099bb;--amber-s:rgba(0,212,255,.07);--amber-g:rgba(0,212,255,.18);
+  --red:#ff2d2d;--green:#00e5a0;--blue:#4db8ff;--yellow:#ffd600;
+  --t1:#c4dff0;--t2:#5c8aaa;--t3:#305070;--ta:#ff8c40;
+  --fd:'Orbitron',sans-serif;--fu:'Exo 2',sans-serif;--fm:'JetBrains Mono',monospace;
+  --r1:4px;--r2:8px;--r3:12px;--tr:all .2s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--t1);font-family:var(--fu);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:9999;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--panel);} ::-webkit-scrollbar-thumb{background:var(--amber2);border-radius:2px;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.nav-logo-hex{width:32px;height:32px;background:var(--amber);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:12px;color:#000;font-weight:900;}
+.nav-logo-text{font-family:var(--fd);font-size:24px;letter-spacing:4px;color:var(--t1);}
+.nav-links{display:flex;align-items:center;gap:4px;}
+.nav-link{padding:7px 16px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);text-decoration:none;border-radius:var(--r1);transition:var(--tr);border:1px solid transparent;}
+.nav-link:hover{color:var(--t1);background:var(--surface);}
+.nav-link.active{color:var(--amber);border-color:var(--amber2);background:var(--amber-s);}
+.nav-cta{padding:8px 20px;background:var(--amber);border:none;border-radius:var(--r1);font-family:var(--fd);font-size:18px;letter-spacing:2px;color:#000;cursor:pointer;transition:var(--tr);text-decoration:none;}
+.nav-cta:hover{background:#00b8d9;}
+.hamburger{display:none;flex-direction:column;gap:4px;background:none;border:none;cursor:pointer;padding:4px;}
+.hamburger span{width:22px;height:2px;background:var(--t2);border-radius:1px;}
+
+/* PAGE HERO */
+.page-hero{padding:120px 40px 60px;background:linear-gradient(180deg,rgba(0,212,255,.04) 0%,transparent 100%);border-bottom:1px solid var(--b1);text-align:center;position:relative;}
+.page-hero::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120px;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);}
+.page-eye{font-family:var(--fm);font-size:9px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:14px;}
+.page-h1{font-family:var(--fd);font-size:clamp(40px,5vw,72px);letter-spacing:3px;color:var(--t1);margin-bottom:16px;}
+.page-h1 span{color:var(--amber);}
+.page-sub{font-size:16px;color:var(--t2);max-width:560px;margin:0 auto;line-height:1.7;}
+
+/* LAYOUT */
+.blog-layout{max-width:1200px;margin:0 auto;padding:60px 40px;display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:start;}
+
+/* FEATURED */
+.featured-card{background:var(--panel);border:1px solid var(--b2);border-radius:var(--r3);overflow:hidden;margin-bottom:32px;cursor:pointer;transition:var(--tr);display:grid;grid-template-columns:1fr 1fr;}
+.featured-card:hover{border-color:var(--amber2);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.featured-img{background:linear-gradient(135deg,var(--surface),var(--panel));display:flex;align-items:center;justify-content:center;font-size:64px;padding:40px;border-right:1px solid var(--b1);}
+.featured-body{padding:32px;}
+.post-tag{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:2px;font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;}
+.tag-guide{background:rgba(0,212,255,.12);color:var(--amber);border:1px solid rgba(0,212,255,.3);}
+.tag-news{background:rgba(77,184,255,.1);color:var(--blue);border:1px solid rgba(77,184,255,.25);}
+.tag-tips{background:rgba(0,229,160,.1);color:var(--green);border:1px solid rgba(0,229,160,.25);}
+.tag-tech{background:rgba(255,214,0,.1);color:var(--yellow);border:1px solid rgba(255,214,0,.3);}
+.tag-safety{background:rgba(255,45,45,.12);color:var(--red);border:1px solid rgba(255,45,45,.3);}
+.featured-label{font-family:var(--fm);font-size:9px;color:var(--amber);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;}
+.post-title{font-family:var(--fd);font-size:28px;letter-spacing:2px;color:var(--t1);margin-bottom:12px;line-height:1.1;}
+.post-excerpt{font-size:14px;color:var(--t2);line-height:1.75;margin-bottom:20px;}
+.post-meta{display:flex;align-items:center;gap:16px;}
+.post-author{display:flex;align-items:center;gap:8px;}
+.post-avatar{width:28px;height:28px;border-radius:var(--r1);background:var(--amber-s);border:1px solid var(--amber2);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:13px;color:var(--amber);flex-shrink:0;}
+.post-author-name{font-size:12px;font-weight:600;color:var(--t1);}
+.post-date{font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:1px;}
+.post-read-time{font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:1px;margin-left:auto;}
+
+/* GRID */
+.posts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;}
+.post-card{background:var(--panel);border:1px solid var(--b1);border-radius:var(--r3);overflow:hidden;cursor:pointer;transition:var(--tr);}
+.post-card:hover{border-color:var(--b2);transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35);}
+.post-card-img{background:var(--surface);padding:28px;text-align:center;font-size:40px;border-bottom:1px solid var(--b1);}
+.post-card-body{padding:20px;}
+.post-card-title{font-family:var(--fd);font-size:20px;letter-spacing:1.5px;color:var(--t1);margin:10px 0 8px;line-height:1.15;}
+.post-card-excerpt{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:14px;}
+.post-card-footer{display:flex;align-items:center;justify-content:space-between;}
+.read-link{font-family:var(--fm);font-size:9px;color:var(--amber);letter-spacing:1px;text-decoration:none;transition:var(--tr);}
+.read-link:hover{color:var(--ta);}
+
+/* LIST POSTS */
+.post-list-item{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--b1);cursor:pointer;transition:var(--tr);}
+.post-list-item:last-child{border-bottom:none;}
+.post-list-item:hover .post-list-title{color:var(--amber);}
+.post-list-num{font-family:var(--fm);font-size:22px;color:var(--b2);font-weight:700;min-width:36px;padding-top:2px;}
+.post-list-title{font-family:var(--fd);font-size:18px;letter-spacing:1px;color:var(--t1);margin-bottom:4px;transition:var(--tr);}
+.post-list-meta{font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:1px;}
+
+/* SIDEBAR */
+.blog-sidebar{display:flex;flex-direction:column;gap:20px;}
+.sidebar-widget{background:var(--panel);border:1px solid var(--b1);border-radius:var(--r3);overflow:hidden;}
+.widget-header{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--b1);}
+.widget-title{font-family:var(--fm);font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;}
+.widget-body{padding:16px;}
+.category-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1);cursor:pointer;transition:var(--tr);}
+.category-item:last-child{border-bottom:none;}
+.category-item:hover .cat-name{color:var(--amber);}
+.cat-name{font-size:13px;font-weight:600;color:var(--t2);transition:var(--tr);}
+.cat-count{font-family:var(--fm);font-size:10px;color:var(--t3);padding:2px 7px;background:var(--surface);border-radius:2px;border:1px solid var(--b1);}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:6px;}
+.tag-pill{padding:5px 12px;background:var(--surface);border:1px solid var(--b1);border-radius:2px;font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:1px;cursor:pointer;transition:var(--tr);}
+.tag-pill:hover{border-color:var(--amber2);color:var(--amber);background:var(--amber-s);}
+.newsletter-input{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--b2);border-radius:var(--r1);color:var(--t1);font-family:var(--fu);font-size:13px;font-weight:500;outline:none;margin-bottom:8px;transition:var(--tr);}
+.newsletter-input:focus{border-color:var(--amber);}
+.newsletter-input::placeholder{color:var(--t3);}
+.newsletter-btn{width:100%;padding:10px;background:var(--amber);border:none;border-radius:var(--r1);font-family:var(--fd);font-size:18px;letter-spacing:2px;color:#000;cursor:pointer;transition:var(--tr);}
+.newsletter-btn:hover{background:#00b8d9;}
+.trending-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--b1);cursor:pointer;}
+.trending-item:last-child{border-bottom:none;}
+.trending-item:hover .trending-title{color:var(--amber);}
+.trending-rank{font-family:var(--fm);font-size:18px;color:var(--amber2);font-weight:700;min-width:24px;}
+.trending-title{font-size:12px;font-weight:600;color:var(--t2);transition:var(--tr);line-height:1.4;}
+.trending-date{font-family:var(--fm);font-size:9px;color:var(--t3);margin-top:3px;}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;gap:6px;margin-top:32px;}
+.page-btn{width:36px;height:36px;background:var(--panel);border:1px solid var(--b1);border-radius:var(--r1);color:var(--t2);font-family:var(--fm);font-size:12px;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;}
+.page-btn:hover{border-color:var(--amber2);color:var(--amber);}
+.page-btn.active{background:var(--amber);border-color:var(--amber);color:#000;}
+
+/* FADE IN */
+.fade-up{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease;}
+.fade-up.visible{opacity:1;transform:translateY(0);}
+
+/* MODAL */
+.article-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:2000;display:flex;align-items:flex-start;justify-content:center;padding:80px 20px 40px;overflow-y:auto;animation:fade-in .2s ease;}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.article-inner{background:var(--panel);border:1px solid var(--b2);border-radius:var(--r3);max-width:740px;width:100%;position:relative;}
+.article-inner::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),transparent);border-radius:var(--r3) var(--r3) 0 0;}
+.article-close{position:absolute;top:16px;right:16px;width:32px;height:32px;background:var(--surface);border:1px solid var(--b2);border-radius:var(--r1);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:var(--tr);}
+.article-close:hover{border-color:var(--red);color:var(--red);}
+.article-header{padding:32px 32px 24px;border-bottom:1px solid var(--b1);}
+.article-body{padding:28px 32px;font-size:15px;color:var(--t2);line-height:1.8;}
+.article-body h3{font-family:var(--fd);font-size:22px;letter-spacing:2px;color:var(--t1);margin:24px 0 12px;}
+.article-body p{margin-bottom:16px;}
+.article-body .highlight{background:var(--amber-s);border-left:3px solid var(--amber);padding:12px 16px;border-radius:0 var(--r1) var(--r1) 0;font-family:var(--fm);font-size:12px;color:var(--ta);margin:16px 0;letter-spacing:.5px;}
+.article-body strong{color:var(--t1);}
+.article-body .dtc-inline{color:var(--amber);font-family:var(--fm);font-weight:700;letter-spacing:1px;}
+
+@media(max-width:960px){.blog-layout{grid-template-columns:1fr;}.blog-sidebar{display:none;}.featured-card{grid-template-columns:1fr;}.posts-grid{grid-template-columns:1fr;}}
+@media(max-width:600px){nav{padding:0 20px;}.page-hero{padding:100px 20px 40px;}.blog-layout{padding:40px 20px;}.hamburger{display:flex;}.nav-links{display:none;position:fixed;top:60px;left:0;right:0;background:var(--panel);border-bottom:1px solid var(--b1);flex-direction:column;padding:16px;gap:4px;}.nav-links.open{display:flex;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="nav-logo-hex">AD</div>
+    <span class="nav-logo-text">AUTODOC</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link" href="/dashboard/">Dashboard</a>
+    <a class="nav-link active" href="/blog/">Blog</a>
+    <a class="nav-link" href="/about/">About Us</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a class="nav-cta" href="/autodoc/">Launch App</a>
+    <button class="hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-eye">Knowledge Base</div>
+  <h1 class="page-h1">AUTODOC <span>BLOG</span></h1>
+  <p class="page-sub">DTC guides, diagnostic tutorials, AI in automotive, and expert tips from our engineering team.</p>
+</div>
+
+<div class="blog-layout">
+  <div>
+    <!-- FEATURED -->
+    <div class="featured-card fade-up" onclick="openArticle('featured')">
+      <div class="featured-img">🔧</div>
+      <div class="featured-body">
+        <div class="featured-label">Featured Article</div>
+        <span class="post-tag tag-guide">Complete Guide</span>
+        <div class="post-title">Understanding OBD-II Fault Codes: A Complete Diagnostic Guide</div>
+        <div class="post-excerpt">Everything you need to know about P, B, C, and U codes — what they mean, how to diagnose them, and when to call a mechanic versus fixing it yourself.</div>
+        <div class="post-meta">
+          <div class="post-author"><div class="post-avatar">IA</div><div><div class="post-author-name">Imesh Abeysinghe</div><div class="post-date">Mar 14, 2025</div></div></div>
+          <span class="post-read-time">12 min read</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID POSTS -->
+    <div class="posts-grid">
+      <div class="post-card fade-up" onclick="openArticle('misfire')">
+        <div class="post-card-img">🔥</div>
+        <div class="post-card-body">
+          <span class="post-tag tag-tips">Troubleshooting</span>
+          <div class="post-card-title">How to Diagnose a P0300 Random Misfire</div>
+          <div class="post-card-excerpt">Step-by-step diagnosis for the most common engine fault code. Includes spark plug inspection, compression testing, and injector checks.</div>
+          <div class="post-card-footer"><span class="post-date">Mar 10 · 8 min</span><a class="read-link" href="#">READ MORE →</a></div>
+        </div>
+      </div>
+      <div class="post-card fade-up" onclick="openArticle('ai')">
+        <div class="post-card-img">🤖</div>
+        <div class="post-card-body">
+          <span class="post-tag tag-tech">Technology</span>
+          <div class="post-card-title">How AI Is Changing Vehicle Diagnostics in 2025</div>
+          <div class="post-card-excerpt">From GPT-4 to Claude Sonnet — how large language models are being trained on automotive data to deliver mechanic-grade diagnosis.</div>
+          <div class="post-card-footer"><span class="post-date">Mar 07 · 6 min</span><a class="read-link" href="#">READ MORE →</a></div>
+        </div>
+      </div>
+      <div class="post-card fade-up" onclick="openArticle('catalyst')">
+        <div class="post-card-img">💨</div>
+        <div class="post-card-body">
+          <span class="post-tag tag-guide">Guide</span>
+          <div class="post-card-title">P0420 Catalyst Efficiency: Replace or Wait?</div>
+          <div class="post-card-excerpt">The P0420 code scares drivers into unnecessary catalytic converter replacements. Learn how to check your O2 sensors first.</div>
+          <div class="post-card-footer"><span class="post-date">Mar 03 · 5 min</span><a class="read-link" href="#">READ MORE →</a></div>
+        </div>
+      </div>
+      <div class="post-card fade-up" onclick="openArticle('safety')">
+        <div class="post-card-img">🛑</div>
+        <div class="post-card-body">
+          <span class="post-tag tag-safety">Safety</span>
+          <div class="post-card-title">Warning Signs You Should Never Ignore While Driving</div>
+          <div class="post-card-excerpt">Brake fade, steering pull, smoke from the hood — these symptoms demand you stop immediately. AutoDoc's safety protocol explained.</div>
+          <div class="post-card-footer"><span class="post-date">Feb 28 · 4 min</span><a class="read-link" href="#">READ MORE →</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MORE POSTS LIST -->
+    <div class="panel-card fade-up" style="background:var(--panel);border:1px solid var(--b1);border-radius:var(--r3);overflow:hidden;">
+      <div style="padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--b1);font-family:var(--fm);font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;">More Articles</div>
+      <div style="padding:0 18px;">
+        <div class="post-list-item" onclick="openArticle('featured')"><div class="post-list-num">05</div><div><div class="post-list-title">EV vs Petrol Diagnostics: Key Differences Every Driver Should Know</div><div class="post-list-meta">Feb 22 · 7 min · <span style="color:var(--blue)">TECHNOLOGY</span></div></div></div>
+        <div class="post-list-item" onclick="openArticle('featured')"><div class="post-list-num">06</div><div><div class="post-list-title">What Does the Check Engine Light Actually Mean?</div><div class="post-list-meta">Feb 18 · 5 min · <span style="color:var(--green)">BEGINNER GUIDE</span></div></div></div>
+        <div class="post-list-item" onclick="openArticle('featured')"><div class="post-list-num">07</div><div><div class="post-list-title">Turbo Failures: Early Symptoms and Diagnosis with AutoDoc</div><div class="post-list-meta">Feb 12 · 9 min · <span style="color:var(--amber)">TROUBLESHOOTING</span></div></div></div>
+        <div class="post-list-item" onclick="openArticle('featured')"><div class="post-list-num">08</div><div><div class="post-list-title">AutoDoc vs Traditional OBD Scanners: A Feature Comparison</div><div class="post-list-meta">Feb 05 · 6 min · <span style="color:var(--yellow)">COMPARISON</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="pagination">
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">→</button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="blog-sidebar">
+    <div class="sidebar-widget">
+      <div class="widget-header"><div class="widget-title">Categories</div></div>
+      <div class="widget-body">
+        <div class="category-item"><span class="cat-name">Troubleshooting Guides</span><span class="cat-count">14</span></div>
+        <div class="category-item"><span class="cat-name">AI & Technology</span><span class="cat-count">9</span></div>
+        <div class="category-item"><span class="cat-name">DTC Code Library</span><span class="cat-count">32</span></div>
+        <div class="category-item"><span class="cat-name">Safety Tips</span><span class="cat-count">7</span></div>
+        <div class="category-item"><span class="cat-name">EV Diagnostics</span><span class="cat-count">5</span></div>
+        <div class="category-item"><span class="cat-name">DIY Repairs</span><span class="cat-count">11</span></div>
+      </div>
+    </div>
+
+    <div class="sidebar-widget">
+      <div class="widget-header"><div class="widget-title">Trending This Week</div></div>
+      <div class="widget-body" style="padding:8px 16px;">
+        <div class="trending-item"><div class="trending-rank">01</div><div><div class="trending-title">P0300 Misfire: Complete Fix Guide</div><div class="trending-date">8,420 reads</div></div></div>
+        <div class="trending-item"><div class="trending-rank">02</div><div><div class="trending-title">What Does P0420 Actually Mean?</div><div class="trending-date">6,103 reads</div></div></div>
+        <div class="trending-item"><div class="trending-rank">03</div><div><div class="trending-title">AI vs OBD Scanner: Who Wins?</div><div class="trending-date">4,891 reads</div></div></div>
+        <div class="trending-item"><div class="trending-rank">04</div><div><div class="trending-title">5 Brake Symptoms to Never Ignore</div><div class="trending-date">3,204 reads</div></div></div>
+      </div>
+    </div>
+
+    <div class="sidebar-widget">
+      <div class="widget-header"><div class="widget-title">Tags</div></div>
+      <div class="widget-body">
+        <div class="tag-cloud">
+          <span class="tag-pill">OBD-II</span><span class="tag-pill">P0300</span><span class="tag-pill">Engine</span>
+          <span class="tag-pill">ChatGPT</span><span class="tag-pill">Claude</span><span class="tag-pill">Misfire</span>
+          <span class="tag-pill">EV</span><span class="tag-pill">Brakes</span><span class="tag-pill">Transmission</span>
+          <span class="tag-pill">AC</span><span class="tag-pill">DIY</span><span class="tag-pill">Safety</span>
+          <span class="tag-pill">P0420</span><span class="tag-pill">Turbo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-widget">
+      <div class="widget-header"><div class="widget-title">Newsletter</div></div>
+      <div class="widget-body">
+        <p style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:14px;">Get new diagnostic guides and DTC explainers delivered weekly.</p>
+        <input class="newsletter-input" placeholder="your@email.com" type="email"/>
+        <button class="newsletter-btn" onclick="alert('Subscribed! (Connect to backend)')">SUBSCRIBE</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ARTICLE MODAL -->
+<div id="article-modal" style="display:none;">
+  <div class="article-modal" onclick="e=>e.target===this&&closeArticle()">
+    <div class="article-inner">
+      <button class="article-close" onclick="closeArticle()">✕</button>
+      <div class="article-header" id="article-header"></div>
+      <div class="article-body" id="article-body"></div>
+    </div>
+  </div>
+</div>
+
+<footer style="background:var(--panel);border-top:1px solid var(--b1);padding:40px;">
+  <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+    <div style="font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1px;">© 2025 AutoDoc · Imesh S Abeysinghe</div>
+    <div style="display:flex;gap:20px;">
+      <a href="/" style="font-family:var(--fm);font-size:10px;color:var(--t3);text-decoration:none;letter-spacing:1px;transition:var(--tr);" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--t3)'">HOME</a>
+      <a href="/dashboard/" style="font-family:var(--fm);font-size:10px;color:var(--t3);text-decoration:none;letter-spacing:1px;transition:var(--tr);" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--t3)'">DASHBOARD</a>
+      <a href="/about/" style="font-family:var(--fm);font-size:10px;color:var(--t3);text-decoration:none;letter-spacing:1px;transition:var(--tr);" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--t3)'">ABOUT</a>
+      <a href="/autodoc/" style="font-family:var(--fm);font-size:10px;color:var(--t3);text-decoration:none;letter-spacing:1px;transition:var(--tr);" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--t3)'">APP</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const ARTICLES = {
+  featured:{
+    tag:'Complete Guide', tagClass:'tag-guide', icon:'🔧', title:'Understanding OBD-II Fault Codes',
+    date:'Mar 14, 2025', author:'Imesh Abeysinghe', readTime:'12 min read',
+    body:`<h3>WHAT IS OBD-II?</h3><p>On-Board Diagnostics II (OBD-II) is a standardised system fitted to all vehicles manufactured after 1996. It monitors engine, transmission, emissions, and electrical systems — and stores Diagnostic Trouble Codes (DTCs) when it detects a problem.</p><div class="highlight">⚠ Every time your check engine light illuminates, at least one DTC has been stored. AutoDoc reads and interprets these codes instantly.</div><h3>THE FOUR CODE FAMILIES</h3><p><strong>P-codes (Powertrain)</strong> cover the engine, transmission, and associated drivetrain components. These are the most common and include codes like <span class="dtc-inline">P0300</span> (misfire) and <span class="dtc-inline">P0420</span> (catalyst).</p><p><strong>B-codes (Body)</strong> cover airbags, climate control, power windows, and similar body systems. Example: <span class="dtc-inline">B1000</span> for ECU internal faults.</p><p><strong>C-codes (Chassis)</strong> address ABS, stability control, and suspension. These are safety-critical and should always be addressed promptly.</p><p><strong>U-codes (Network)</strong> indicate communication failures between ECUs. Often caused by wiring harness issues or a failed module.</p><h3>HOW AUTODOC DIAGNOSES THEM</h3><p>When you enter a DTC into AutoDoc, it queries its AI backend with full context about your vehicle. It cross-references the code against known failure patterns, suggests ranked probable causes, and tells you whether the repair is DIY-safe or requires a workshop.</p>`
+  },
+  misfire:{
+    tag:'Troubleshooting', tagClass:'tag-tips', icon:'🔥', title:'Diagnosing P0300: Random Misfire',
+    date:'Mar 10, 2025', author:'Imesh Abeysinghe', readTime:'8 min read',
+    body:`<h3>WHAT IS A P0300?</h3><p>Code <span class="dtc-inline">P0300</span> means the ECU has detected misfires across multiple cylinders, or cannot identify which cylinder is misfiring. This is distinct from <span class="dtc-inline">P0301–P0308</span>, which pin a specific cylinder.</p><div class="highlight">⚠ A misfiring engine can damage your catalytic converter within hours. Do not ignore this code.</div><h3>MOST LIKELY CAUSES (RANKED)</h3><p><strong>1. Spark plugs</strong> — Worn or fouled spark plugs are responsible for over 60% of P0300 codes. Check gap and condition first — it's a £20 fix.</p><p><strong>2. Ignition coils</strong> — A failing coil pack will cause intermittent misfires. Swap coils between cylinders and rescan to confirm.</p><p><strong>3. Fuel injectors</strong> — Clogged injectors cause lean misfires. Use AutoDoc to ask for a fuel trim analysis.</p><p><strong>4. Low compression</strong> — If spark and ignition checks pass, run a compression test. Below 150 PSI on any cylinder indicates internal wear.</p><h3>ASK AUTODOC</h3><p>Type <em>"P0300 on my 2019 Toyota Camry 2.5L — engine shakes at idle"</em> into AutoDoc for a targeted, vehicle-specific diagnosis.</p>`
+  },
+  ai:{
+    tag:'Technology', tagClass:'tag-tech', icon:'🤖', title:'How AI Is Changing Vehicle Diagnostics',
+    date:'Mar 07, 2025', author:'Imesh Abeysinghe', readTime:'6 min read',
+    body:`<h3>THE SHIFT FROM SCAN TOOLS TO AI</h3><p>Traditional OBD scanners tell you <em>what</em> the code is. AI diagnostic systems tell you <em>why</em> it triggered, <em>what</em> the most probable cause is, and <em>how</em> to fix it — ranked by probability and cost.</p><div class="highlight">AutoDoc queries ChatGPT, Gemini, Grok, or Claude — all trained on vast automotive datasets — to give you mechanic-grade reasoning in seconds.</div><h3>WHY MULTIPLE MODELS?</h3><p>Different AI models have different strengths. Claude excels at nuanced reasoning and safety escalation. ChatGPT provides broad automotive coverage. Gemini offers strong multilingual support. AutoDoc's auto-switch feature means you never hit a quota wall mid-diagnosis.</p><h3>THE FUTURE</h3><p>As vehicle data APIs become standardised (CAN bus, UDS protocol, OTA telematics), AI systems will be able to pull real-time sensor data directly. AutoDoc is already architected to support live telemetry feeds in the next major release.</p>`
+  },
+  catalyst:{
+    tag:'Guide', tagClass:'tag-guide', icon:'💨', title:'P0420: Replace the Cat or Check O2 Sensors First?',
+    date:'Mar 03, 2025', author:'Imesh Abeysinghe', readTime:'5 min read',
+    body:`<h3>THE MOST MISDIAGNOSED CODE</h3><p><span class="dtc-inline">P0420</span> — "Catalyst System Efficiency Below Threshold (Bank 1)" — is the most commonly misdiagnosed fault code. Mechanics charge £500–£1,200 to replace catalytic converters when a £40 O2 sensor was the actual culprit.</p><div class="highlight">Rule: Always inspect both upstream and downstream O2 sensors before authorising a catalytic converter replacement.</div><h3>HOW TO DIAGNOSE P0420 CORRECTLY</h3><p><strong>Step 1:</strong> Check for exhaust leaks before the downstream O2 sensor. A small leak creates a false lean reading.</p><p><strong>Step 2:</strong> Compare upstream vs downstream O2 sensor waveforms. A healthy catalyst should show a flat downstream signal. If it mirrors upstream, the cat is failing.</p><p><strong>Step 3:</strong> Check O2 sensor response time. A slow-reacting sensor mimics a dead catalyst. Replace the sensor first.</p><h3>ASK AUTODOC</h3><p>Paste your freeze frame data into AutoDoc with a note about your O2 sensor readings for a targeted diagnosis before spending any money.</p>`
+  },
+  safety:{
+    tag:'Safety', tagClass:'tag-safety', icon:'🛑', title:'Warning Signs You Should Never Ignore',
+    date:'Feb 28, 2025', author:'Imesh Abeysinghe', readTime:'4 min read',
+    body:`<h3>STOP THE CAR IMMEDIATELY</h3><p>AutoDoc classifies the following symptoms as safety-critical. If you experience any of these, pull over safely and do not continue driving.</p><div class="highlight">⚠ AutoDoc will automatically flag safety-critical conditions and escalate them with a prominent warning in the chat interface.</div><h3>CRITICAL SYMPTOMS</h3><p><strong>Brake pedal goes to the floor</strong> — Brake fluid loss or master cylinder failure. Do not drive. Call a tow truck.</p><p><strong>Steering suddenly feels loose or pulls hard</strong> — Power steering failure or a broken tie rod. Pull over immediately.</p><p><strong>Smoke or flames from the engine bay</strong> — Engine fire risk. Stop, exit the vehicle, and move away. Call emergency services.</p><p><strong>Strong smell of fuel inside the cabin</strong> — Fuel line leak. Fire hazard. Stop immediately, do not start the engine again.</p><p><strong>Temperature gauge in the red</strong> — Engine overheating. Stop within 2 minutes or you risk catastrophic engine failure.</p>`
+  }
+};
+
+function openArticle(key){
+  const a=ARTICLES[key];
+  document.getElementById('article-header').innerHTML=`
+    <span class="post-tag ${a.tagClass}" style="margin-bottom:12px;display:inline-flex;">${a.tag}</span>
+    <div style="font-family:var(--fd);font-size:28px;letter-spacing:2px;color:var(--t1);margin-bottom:12px;">${a.title}</div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:4px;background:var(--amber-s);border:1px solid var(--amber2);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:13px;color:var(--amber)">IA</div><div><div style="font-size:12px;font-weight:600;color:var(--t1)">${a.author}</div><div style="font-family:var(--fm);font-size:9px;color:var(--t3)">${a.date}</div></div></div>
+      <span style="font-family:var(--fm);font-size:9px;color:var(--t3);margin-left:auto">${a.readTime}</span>
+    </div>`;
+  document.getElementById('article-body').innerHTML=a.body;
+  document.getElementById('article-modal').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeArticle(){
+  document.getElementById('article-modal').style.display='none';
+  document.body.style.overflow='';
+}
+document.getElementById('article-modal').addEventListener('click',function(e){if(e.target===this)closeArticle();});
+
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
