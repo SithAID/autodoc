@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoDoc — AI Diagnostics</title>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Exo+2:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg-void:#07090e; --bg-panel:#0c1220; --bg-surface:#101828; --bg-raised:#162234;
+  --border-dim:#1e3048; --border-mid:#2a4468;
+  --cyan:#00d4ff; --cyan-dim:#0099bb; --cyan-soft:rgba(0,212,255,0.07); --cyan-glow:rgba(0,212,255,0.2);
+  --red-alert:#e05c5c; --green-ok:#00d68f; --blue-info:#4d9eff; --yellow-warn:#ffc233;
+  --text-primary:#c4dff0; --text-secondary:#5c8aaa; --text-dim:#305070; --text-cyan:#5ee8ff; --text-mono:#7ab0cc;
+  --font-display:'Orbitron',sans-serif; --font-ui:'Exo 2',sans-serif; --font-mono:'JetBrains Mono',monospace;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
+  --transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body,#root{height:100%;height:100dvh;overflow:hidden;max-width:100vw;}
+body{background:var(--bg-void);color:var(--text-primary);font-family:var(--font-ui);font-size:15px;letter-spacing:.01em;-webkit-font-smoothing:antialiased;max-width:100vw;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,212,255,.015) 3px,rgba(0,212,255,.015) 4px);pointer-events:none;z-index:9999;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg-panel);} ::-webkit-scrollbar-thumb{background:var(--cyan-dim);border-radius:2px;}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-rows:60px 1fr;grid-template-columns:260px minmax(0,1fr) 280px;height:100vh;height:100dvh;width:100%;overflow:hidden;}
+.topbar{grid-column:1/-1;grid-row:1;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--bg-panel);border-bottom:1px solid var(--border-dim);position:relative;z-index:100;min-width:0;overflow:hidden;}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.4;}
+.sidebar-left{grid-column:1;grid-row:2;background:var(--bg-panel);border-right:1px solid var(--border-dim);overflow-y:auto;display:flex;flex-direction:column;min-width:0;}
+.main-content{grid-column:2;grid-row:2;display:flex;flex-direction:column;overflow:hidden;min-width:0;min-height:0;}
+.sidebar-right{grid-column:3;grid-row:2;background:var(--bg-panel);border-left:1px solid var(--border-dim);overflow-y:auto;min-width:0;}
+
+/* mobile hamburger */
+.menu-btn{display:none;width:36px;height:36px;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-sm);color:var(--text-secondary);font-size:18px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;}
+.menu-btn:hover{border-color:var(--cyan-dim);color:var(--cyan);}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:150;}
+
+/* ── TOPBAR ── */
+.logo-mark{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--cyan),#0099cc);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:11px;color:#000;font-weight:800;font-family:var(--font-display);flex-shrink:0;animation:pulse-icon 3s ease-in-out infinite;}
+@keyframes pulse-icon{0%,100%{filter:drop-shadow(0 0 0px var(--cyan));}50%{filter:drop-shadow(0 0 8px var(--cyan));}}
+.logo-text{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:3px;color:var(--text-primary);line-height:1;}
+.logo-sub{font-family:var(--font-mono);font-size:8px;color:var(--cyan);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px;opacity:.8;}
+.topbar-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green-ok);box-shadow:0 0 8px var(--green-ok);animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
+.status-label{font-family:var(--font-mono);font-size:10px;color:var(--green-ok);letter-spacing:2px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.sys-time{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
+.nav-pill{display:flex;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-sm);overflow:hidden;}
+.nav-pill-btn{padding:7px 14px;font-family:var(--font-ui);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:transparent;border:none;color:var(--text-secondary);cursor:pointer;transition:var(--transition);white-space:nowrap;}
+.nav-pill-btn:hover{background:var(--bg-raised);color:var(--text-primary);}
+.nav-pill-btn.active{background:var(--cyan);color:#000;}
+
+/* ── SIDEBAR LEFT ── */
+.sidebar-section{padding:16px;border-bottom:1px solid var(--border-dim);}
+.sidebar-label{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;opacity:.85;}
+.sidebar-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border-mid),transparent);}
+.vehicle-card{background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-md);padding:14px;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden;}
+.vehicle-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cyan);transform:scaleY(0);transform-origin:bottom;transition:transform .2s ease;}
+.vehicle-card:hover::before,.vehicle-card.active::before{transform:scaleY(1);}
+.vehicle-card.active{background:var(--bg-raised);border-color:var(--border-mid);}
+.vehicle-year{font-family:var(--font-mono);font-size:9px;color:var(--cyan);letter-spacing:2px;opacity:.9;}
+.vehicle-name{font-family:var(--font-display);font-size:16px;letter-spacing:1.5px;color:var(--text-primary);line-height:1.15;margin:4px 0 2px;}
+.vehicle-sub{font-size:11px;color:var(--text-secondary);letter-spacing:.5px;font-family:var(--font-ui);}
+.vehicle-del-btn{position:absolute;top:8px;right:8px;width:20px;height:20px;background:rgba(224,92,92,.15);border:1px solid rgba(224,92,92,.3);border-radius:3px;color:var(--red-alert);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);}
+.vehicle-card:hover .vehicle-del-btn{opacity:1;}
+.vehicle-del-btn:hover{background:rgba(224,92,92,.3);}
+.add-vehicle-btn{width:100%;padding:10px;background:transparent;border:1px dashed var(--border-mid);border-radius:var(--radius-md);color:var(--text-dim);font-family:var(--font-ui);font-size:12px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:var(--transition);margin-top:8px;text-transform:uppercase;}
+.add-vehicle-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-soft);}
+.history-item{padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);border:1px solid transparent;}
+.history-item:hover{background:var(--bg-surface);border-color:var(--border-dim);}
+.history-item.active-session{background:var(--cyan-soft);border-color:var(--cyan-dim);}
+.history-title{font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.history-meta{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:.5px;}
+.severity-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:2px;font-family:var(--font-mono);font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.severity-critical{background:rgba(224,92,92,.15);color:var(--red-alert);border:1px solid rgba(224,92,92,.3);}
+.severity-warning{background:rgba(255,194,51,.1);color:var(--yellow-warn);border:1px solid rgba(255,194,51,.3);}
+.severity-info{background:rgba(77,158,255,.1);color:var(--blue-info);border:1px solid rgba(77,158,255,.25);}
+.severity-ok{background:rgba(0,214,143,.1);color:var(--green-ok);border:1px solid rgba(0,214,143,.25);}
+
+/* ── MAIN CHAT ── */
+.tab-bar{display:flex;border-bottom:1px solid var(--border-dim);background:var(--bg-surface);flex-shrink:0;overflow-x:auto;}
+.tab-btn{padding:10px 20px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-ui);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:var(--transition);white-space:nowrap;}
+.tab-btn:hover{color:var(--text-secondary);}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+
+/* ── MESSAGES ── */
+.messages-viewport{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.message-row{display:flex;gap:12px;animation:msg-in .3s cubic-bezier(.4,0,.2,1);}
+@keyframes msg-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.message-row.user{flex-direction:row-reverse;}
+.avatar{width:32px;height:32px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:9px;font-weight:700;flex-shrink:0;letter-spacing:1px;}
+.avatar-doc{background:var(--cyan-soft);border:1px solid var(--cyan-dim);color:var(--cyan);}
+.avatar-user{background:rgba(77,158,255,.1);border:1px solid rgba(77,158,255,.3);color:var(--blue-info);}
+.bubble{max-width:75%;padding:13px 16px;border-radius:var(--radius-md);line-height:1.65;font-size:14px;position:relative;}
+.bubble-doc{background:var(--bg-surface);border:1px solid var(--border-dim);border-top-left-radius:2px;color:var(--text-primary);}
+.bubble-user{background:var(--bg-raised);border:1px solid var(--border-mid);border-top-right-radius:2px;color:var(--text-primary);}
+.bubble-sender{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.bubble-doc .bubble-sender{color:var(--cyan);}
+.bubble-user .bubble-sender{color:var(--blue-info);}
+.bubble-time{font-family:var(--font-mono);font-size:8px;color:var(--text-dim);margin-top:8px;text-align:right;}
+.typing-row{display:flex;align-items:center;gap:12px;animation:msg-in .3s ease;}
+.typing-bubble{background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-md);border-top-left-radius:2px;padding:13px 18px;display:flex;align-items:center;gap:5px;}
+.typing-dot{width:6px;height:6px;background:var(--cyan);border-radius:50%;animation:typing-bounce 1.2s ease-in-out infinite;}
+.typing-dot:nth-child(2){animation-delay:.15s;} .typing-dot:nth-child(3){animation-delay:.3s;}
+@keyframes typing-bounce{0%,60%,100%{transform:translateY(0);opacity:.35;}30%{transform:translateY(-6px);opacity:1;}}
+.typing-label{font-family:var(--font-mono);font-size:9px;color:var(--cyan-dim);letter-spacing:1px;margin-left:6px;}
+.system-message{text-align:center;padding:20px;}
+.system-banner{display:inline-flex;flex-direction:column;align-items:center;gap:8px;padding:22px 36px;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-lg);position:relative;overflow:hidden;}
+.system-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);}
+.system-banner-title{font-family:var(--font-display);font-size:18px;letter-spacing:3px;color:var(--text-primary);}
+.system-banner-sub{font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);letter-spacing:1.5px;}
+.quick-prompts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
+.quick-btn{padding:7px 14px;background:var(--bg-raised);border:1px solid var(--border-dim);border-radius:var(--radius-sm);color:var(--text-secondary);font-family:var(--font-ui);font-size:12px;font-weight:500;cursor:pointer;transition:var(--transition);}
+.quick-btn:hover{background:var(--cyan-soft);border-color:var(--cyan-dim);color:var(--cyan);}
+
+/* ── INPUT ── */
+.input-area{padding:14px 18px;background:var(--bg-surface);border-top:1px solid var(--border-dim);flex-shrink:0;}
+.input-warning{display:flex;align-items:center;gap:8px;padding:7px 12px;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.15);border-radius:var(--radius-sm);margin-bottom:10px;font-family:var(--font-mono);font-size:9px;color:var(--text-cyan);letter-spacing:.5px;opacity:.8;}
+.input-warning-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);flex-shrink:0;animation:blink 1.5s ease infinite;}
+.input-row{display:flex;gap:10px;align-items:flex-end;}
+.chat-textarea{width:100%;padding:12px 14px;background:var(--bg-raised);border:1px solid var(--border-mid);border-radius:var(--radius-md);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;font-weight:400;resize:none;min-height:46px;max-height:140px;outline:none;transition:var(--transition);line-height:1.5;}
+.chat-textarea::placeholder{color:var(--text-dim);font-weight:300;}
+.chat-textarea:focus{border-color:var(--cyan-dim);box-shadow:0 0 0 2px rgba(0,212,255,.1);}
+.send-btn{width:46px;height:46px;background:linear-gradient(135deg,var(--cyan),#0099cc);border:none;border-radius:var(--radius-md);color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);flex-shrink:0;}
+.send-btn:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 0 20px rgba(0,212,255,.35);transform:translateY(-1px);}
+.send-btn:disabled{opacity:.35;cursor:not-allowed;}
+.send-btn svg{width:18px;height:18px;}
+
+/* ── RIGHT SIDEBAR ── */
+.diag-panel{padding:16px;}
+.gauge-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.gauge-card{background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-md);padding:12px 10px;text-align:center;}
+.gauge-value{font-family:var(--font-display);font-size:24px;letter-spacing:1px;line-height:1;margin-bottom:2px;}
+.gauge-unit{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;}
+.gauge-label{font-family:var(--font-mono);font-size:8px;letter-spacing:1.5px;color:var(--text-secondary);text-transform:uppercase;margin-top:4px;}
+.gauge-bar{height:2px;background:var(--border-dim);border-radius:1px;margin-top:8px;overflow:hidden;}
+.gauge-fill{height:100%;border-radius:1px;transition:width 1.5s cubic-bezier(.4,0,.2,1);}
+.dtc-list{display:flex;flex-direction:column;gap:6px;}
+.dtc-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);}
+.dtc-item:hover{border-color:var(--border-mid);background:var(--bg-raised);}
+.dtc-indicator{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dtc-indicator.critical{background:var(--red-alert);box-shadow:0 0 6px var(--red-alert);}
+.dtc-indicator.warning{background:var(--yellow-warn);box-shadow:0 0 6px var(--yellow-warn);}
+.dtc-indicator.info{background:var(--blue-info);box-shadow:0 0 6px var(--blue-info);}
+.dtc-item-code{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--cyan);letter-spacing:1px;flex-shrink:0;min-width:48px;}
+.dtc-item-desc{font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.checklist{display:flex;flex-direction:column;gap:5px;}
+.check-item{display:flex;align-items:center;gap:9px;padding:8px 10px;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);}
+.check-icon{font-size:13px;flex-shrink:0;}
+
+/* ── DASHBOARD ── */
+.dashboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:20px;overflow-y:auto;}
+.stat-card{background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-md);padding:16px;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.stat-card.ok::after{background:var(--green-ok);}
+.stat-card.warn::after{background:var(--yellow-warn);}
+.stat-card.crit::after{background:var(--red-alert);}
+.stat-card.info::after{background:var(--cyan);}
+.stat-icon{font-size:22px;margin-bottom:8px;}
+.stat-val{font-family:var(--font-display);font-size:28px;letter-spacing:2px;line-height:1;margin-bottom:4px;}
+.stat-card.ok .stat-val{color:var(--green-ok);}
+.stat-card.warn .stat-val{color:var(--yellow-warn);}
+.stat-card.crit .stat-val{color:var(--red-alert);}
+.stat-card.info .stat-val{color:var(--cyan);}
+.stat-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;}
+
+/* ── MODAL ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;animation:fade-in .15s ease;}
+@keyframes fade-in{from{opacity:0;}to{opacity:1;}}
+.modal{background:var(--bg-panel);border:1px solid var(--border-mid);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:95vw;animation:modal-in .25s cubic-bezier(.4,0,.2,1);position:relative;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--cyan),transparent);border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+@keyframes modal-in{from{opacity:0;transform:translateY(16px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.modal-title{font-family:var(--font-display);font-size:18px;letter-spacing:3px;color:var(--text-primary);margin-bottom:6px;}
+.modal-sub{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:22px;}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:7px;opacity:.9;}
+.form-input,.form-select{width:100%;padding:10px 14px;background:var(--bg-surface);border:1px solid var(--border-mid);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-ui);font-size:14px;font-weight:400;outline:none;transition:var(--transition);}
+.form-input:focus,.form-select:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,.08);}
+.form-input::placeholder{color:var(--text-dim);font-weight:300;}
+.form-select{cursor:pointer;} .form-select option{background:var(--bg-panel);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btn-primary{width:100%;padding:12px;background:linear-gradient(135deg,var(--cyan),#0099cc);border:none;border-radius:var(--radius-sm);color:#000;font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:var(--transition);margin-top:8px;}
+.btn-primary:hover{filter:brightness(1.1);box-shadow:0 4px 20px rgba(0,212,255,.25);transform:translateY(-1px);}
+.btn-secondary{padding:9px 18px;background:transparent;border:1px solid var(--border-mid);border-radius:var(--radius-sm);color:var(--text-secondary);font-family:var(--font-ui);font-size:13px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.btn-secondary:hover{border-color:var(--text-secondary);color:var(--text-primary);}
+.modal-error{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.3);border-radius:var(--radius-sm);padding:8px 12px;font-family:var(--font-mono);font-size:11px;color:var(--red-alert);margin-bottom:12px;letter-spacing:.5px;}
+
+/* ── SETTINGS DRAWER ── */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;animation:fade-in .15s ease;}
+.settings-drawer{position:fixed;top:0;right:0;width:360px;height:100vh;background:var(--bg-panel);border-left:1px solid var(--border-mid);z-index:401;overflow-y:auto;animation:drawer-in .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+@keyframes drawer-in{from{transform:translateX(100%);}to{transform:translateX(0);}}
+.drawer-header{padding:20px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;justify-content:space-between;background:var(--bg-surface);position:sticky;top:0;z-index:1;}
+.drawer-title{font-family:var(--font-display);font-size:16px;letter-spacing:3px;color:var(--text-primary);}
+.close-x{width:30px;height:30px;background:var(--bg-raised);border:1px solid var(--border-dim);border-radius:var(--radius-sm);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:var(--transition);}
+.close-x:hover{border-color:var(--red-alert);color:var(--red-alert);}
+.drawer-body{padding:20px;flex:1;}
+.drawer-section{margin-bottom:24px;}
+.drawer-section-title{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-dim);opacity:.85;}
+.key-input-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.key-provider-label{font-family:var(--font-mono);font-size:9px;color:var(--text-secondary);letter-spacing:1px;min-width:60px;text-transform:uppercase;}
+.key-input{flex:1;padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:11px;outline:none;transition:var(--transition);}
+.key-input:focus{border-color:var(--cyan-dim);} .key-input::placeholder{color:var(--text-dim);}
+.save-keys-btn{width:100%;padding:10px;background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.3);border-radius:var(--radius-sm);color:var(--green-ok);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;cursor:pointer;transition:var(--transition);text-transform:uppercase;margin-top:6px;}
+.save-keys-btn:hover{background:rgba(0,214,143,.16);}
+.user-badge{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-md);margin-bottom:12px;}
+.user-avatar-lg{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--cyan-soft);border:1px solid var(--cyan-dim);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:16px;color:var(--cyan);flex-shrink:0;}
+.user-name-text{font-family:var(--font-display);font-size:15px;letter-spacing:1px;color:var(--text-primary);}
+.user-email-text{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:.5px;}
+.logout-btn{width:100%;padding:10px;background:rgba(224,92,92,.08);border:1px solid rgba(224,92,92,.25);border-radius:var(--radius-sm);color:var(--red-alert);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.logout-btn:hover{background:rgba(224,92,92,.18);}
+/* segment control for settings */
+.seg-control{display:flex;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:6px;}
+.seg-btn{flex:1;padding:8px 4px;background:transparent;border:none;color:var(--text-secondary);font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;cursor:pointer;transition:var(--transition);text-align:center;}
+.seg-btn:hover:not(.seg-active){background:var(--bg-raised);color:var(--text-primary);}
+.seg-btn.seg-active{background:var(--cyan);color:#000;font-weight:600;}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9000;pointer-events:none;}
+.toast{padding:12px 18px;border-radius:var(--radius-md);font-family:var(--font-mono);font-size:11px;letter-spacing:1px;display:flex;align-items:center;gap:10px;animation:toast-in .3s cubic-bezier(.4,0,.2,1);pointer-events:all;border:1px solid;}
+.toast.success{background:rgba(0,214,143,.1);border-color:rgba(0,214,143,.35);color:var(--green-ok);}
+.toast.error{background:rgba(224,92,92,.1);border-color:rgba(224,92,92,.35);color:var(--red-alert);}
+.toast.info{background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--cyan);}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toast-out{from{opacity:1;}to{opacity:0;transform:translateX(20px);}}
+.toast.leaving{animation:toast-out .25s ease forwards;}
+
+/* ── DTC DETAIL PANEL ── */
+.dtc-detail{background:var(--bg-surface);border:1px solid var(--border-mid);border-left:2px solid var(--cyan);border-radius:var(--radius-md);padding:14px;margin-top:8px;animation:fade-in .2s ease;}
+.dtc-detail-code{font-family:var(--font-display);font-size:16px;color:var(--cyan);font-weight:700;letter-spacing:3px;margin-bottom:6px;}
+.dtc-detail-desc{font-size:13px;color:var(--text-primary);margin-bottom:8px;font-weight:600;}
+.dtc-detail-info{font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);line-height:1.7;}
+.dtc-ask-btn{margin-top:10px;padding:7px 14px;background:var(--cyan-soft);border:1px solid var(--cyan-dim);border-radius:var(--radius-sm);color:var(--cyan);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.dtc-ask-btn:hover{background:var(--cyan-glow);}
+
+/* ── LOGIN / AUTH ── */
+.login-wrap{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--bg-void);background-image:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,212,255,0.04) 0%,transparent 60%);padding:20px;}
+.auth-tabs{display:flex;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:24px;}
+.auth-tab{flex:1;padding:10px;background:transparent;border:none;color:var(--text-secondary);font-family:var(--font-display);font-size:13px;letter-spacing:2px;font-weight:600;cursor:pointer;transition:var(--transition);}
+.auth-tab.active{background:linear-gradient(135deg,var(--cyan),#0099cc);color:#000;}
+.auth-tab:hover:not(.active){background:var(--bg-raised);color:var(--text-primary);}
+.pw-row{position:relative;}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:4px;transition:color .2s;}
+.pw-toggle:hover{color:var(--text-secondary);}
+.auth-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;font-family:var(--font-mono);font-size:11px;color:var(--cyan);letter-spacing:2px;}
+.auth-spinner{width:14px;height:14px;border:2px solid var(--cyan-soft);border-top-color:var(--cyan);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){
+  .app{grid-template-columns:220px minmax(0,1fr) 0;}
+  .sidebar-right{display:none;}
+  .main-content{grid-column:2;}
+}
+@media(max-width:768px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:60px 1fr;height:100vh;height:100dvh;}
+  .topbar{grid-column:1;grid-row:1;}
+  .sidebar-left{grid-column:unset;grid-row:unset;position:fixed;top:60px;left:0;bottom:0;width:min(280px,85vw);z-index:200;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:4px 0 32px rgba(0,0,0,.7);}
+  .sidebar-left.mobile-open{transform:translateX(0);}
+  .main-content{grid-column:1;grid-row:2;width:100%;min-width:0;min-height:0;}
+  .sidebar-right{display:none;}
+  .sidebar-overlay{display:block;}
+  .sidebar-overlay.hidden{display:none;}
+  .menu-btn{display:flex;}
+  .topbar-center{display:none;}
+  .logo-sub{display:none;}
+  .sys-time{display:none;}
+  .nav-pill-btn{padding:6px 10px;font-size:10px;}
+  .messages-viewport{padding:12px;}
+  .bubble{max-width:88%;}
+  .input-area{padding:10px 12px;}
+  .tab-btn{padding:8px 14px;font-size:10px;letter-spacing:1px;}
+  .settings-drawer{width:min(360px,100vw);}
+}
+@media(max-width:480px){
+  .topbar{padding:0 10px;}
+  .logo-mark{gap:8px;}
+  .logo-text{font-size:16px;letter-spacing:2px;}
+  .logo-icon{width:30px;height:30px;font-size:9px;}
+  .nav-pill-btn{padding:5px 8px;font-size:9px;}
+  .bubble{max-width:92%;font-size:13px;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useReducer } = React;
+const BACKEND_URL = '';
+
+const QUICK_PROMPTS = [
+  'Engine check light is on','Car won\'t start','Rough idle / misfires',
+  'Brake noise when stopping','AC not cooling','Transmission slipping',
+];
+
+const DTC_INFO = {
+  'P0300':{ desc:'Random/Multiple Cylinder Misfire', cause:'Spark plugs, ignition coils, fuel injectors, low compression', action:'Check spark plugs and ignition coils first. Run compression test if issue persists.' },
+  'P0420':{ desc:'Catalyst System Efficiency Below Threshold (Bank 1)', cause:'Worn catalytic converter, faulty O2 sensors, exhaust leaks', action:'Inspect O2 sensors before replacing catalytic converter — often the sensors are the culprit.' },
+  'B1000':{ desc:'ECU Internal Fault', cause:'Software corruption, low battery, water damage to ECU', action:'Clear codes and rescan. If persistent, check battery voltage and ECU ground connections.' },
+};
+
+const INIT_VEHICLES = [
+  { id:1, year:'2019', make:'Toyota', model:'Camry', engine:'2.5L 4-cyl', vin:'4T1B11HK...' },
+  { id:2, year:'2021', make:'Ford', model:'F-150', engine:'3.5L EcoBoost', vin:'1FTEW1EP...' },
+];
+
+const GAUGES = [
+  { label:'Engine Temp', value:'94', unit:'°C', fill:72, color:'#e05c5c' },
+  { label:'RPM',         value:'780', unit:'rpm', fill:14, color:'#00d68f' },
+  { label:'Battery',     value:'12.6', unit:'V',  fill:85, color:'#00d4ff' },
+  { label:'Fuel',        value:'61', unit:'%',    fill:61, color:'#ffc233' },
+];
+
+const CHECKLIST = [
+  { icon:'🔵', label:'OBD Port Connected' },
+  { icon:'🟡', label:'Emissions Check Pending' },
+  { icon:'🟢', label:'Brake System OK' },
+  { icon:'🟢', label:'Tyre Pressure OK' },
+  { icon:'🔴', label:'O2 Sensor Fault' },
+];
+
+const TRANSLATIONS = {
+  en:{
+    welcome:`AUTODOC DIAGNOSTIC SYSTEM v2.1\nAll systems online. Describe your vehicle issue.\nProvide: make · model · year · symptoms`,
+    placeholder:`e.g. "2018 Honda Civic – engine shakes at idle, P0301 code"`,
+    send:'SCAN', warning:'AI DIAGNOSTIC AID — NOT A SUBSTITUTE FOR A CERTIFIED MECHANIC · SAFETY-CRITICAL ISSUES: STOP VEHICLE IMMEDIATELY',
+  },
+  es:{
+    welcome:`SISTEMA DE DIAGNÓSTICO AUTODOC v2.1\nTodos los sistemas en línea. Describe el problema de tu vehículo.`,
+    placeholder:`p.ej. "Toyota Corolla 2018 – falla al ralentí, código P0301"`,
+    send:'ESCANEAR', warning:'ASISTENTE IA — NO REEMPLAZA A UN MECÁNICO CERTIFICADO · PROBLEMA CRÍTICO: DETENER EL VEHÍCULO',
+  },
+  fr:{
+    welcome:`SYSTÈME DE DIAGNOSTIC AUTODOC v2.1\nTous les systèmes en ligne. Décrivez le problème de votre véhicule.`,
+    placeholder:`ex. "Peugeot 208 2020 – vibrations au freinage, voyant allumé"`,
+    send:'SCANNER', warning:'ASSISTANT IA — NE REMPLACE PAS UN MÉCANICIEN CERTIFIÉ · PROBLÈME CRITIQUE : ARRÊTER LE VÉHICULE',
+  },
+  si:{
+    welcome:`AUTODOC රෝග විනිශ්චය පද්ධතිය v2.1\nසියලු පද්ධති සක්‍රියයි. ඔබේ වාහන ගැටළුව විස්තර කරන්න.\nලබා දෙන්න: වෙළෙඳ නාමය · මාදිලිය · වර්ෂය · රෝග ලක්ෂණ`,
+    placeholder:`උදා. "2018 Honda Civic – අයිඩල් හිදී එන්ජිම කම්පනය වේ, P0301 කේතය"`,
+    send:'පරීක්ෂා කරන්න', warning:'AI රෝග විනිශ්චය සහාය — සහතික කළ යාන්ත්‍රිකවරයෙකු සඳහා ආදේශකයක් නොවේ · ආරක්ෂාවට තර්ජනයක්: වාහනය වහාම නවත්වන්න',
+  },
+};
+
+const nowTime = () => new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const sessionId = () => 'AD-'+Math.random().toString(36).slice(2,8).toUpperCase();
+const todayStr = () => new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+const guessSessionSeverity = msgs => {
+  const txt = msgs.map(m=>m.content).join(' ').toLowerCase();
+  if(/brake|steer|fire|fuel.?leak|smoke|no.?start/.test(txt)) return 'critical';
+  if(/misfire|check.?light|noise|vibrat/.test(txt)) return 'warning';
+  if(/service|inspect|oil/.test(txt)) return 'info';
+  return 'ok';
+};
+
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const add = useCallback((msg, type='info', duration=3000) => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => {
+      setToasts(t => t.map(x => x.id===id ? {...x, leaving:true} : x));
+      setTimeout(() => setToasts(t => t.filter(x => x.id!==id)), 300);
+    }, duration);
+  }, []);
+  return { toasts, toast: add };
+}
+
+function ToastContainer({ toasts }) {
+  return (
+    <div className="toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast ${t.type}${t.leaving?' leaving':''}`}>
+          {t.type==='success'?'✓':t.type==='error'?'✕':'ℹ'} {t.msg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Clock() {
+  const [t, setT] = useState(nowTime());
+  useEffect(() => { const id=setInterval(()=>setT(nowTime()),1000); return ()=>clearInterval(id); }, []);
+  return <span className="sys-time">{t}</span>;
+}
+
+function GaugeCard({ label, value, unit, fill, color }) {
+  return (
+    <div className="gauge-card">
+      <div className="gauge-value" style={{color}}>{value}</div>
+      <div className="gauge-unit">{unit}</div>
+      <div className="gauge-label">{label}</div>
+      <div className="gauge-bar"><div className="gauge-fill" style={{width:fill+'%',background:color}}/></div>
+    </div>
+  );
+}
+
+function AddVehicleModal({ onClose, onAdd }) {
+  const [form, setForm] = useState({ year:'', make:'', model:'', engine:'', vin:'' });
+  const [error, setError] = useState('');
+  const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
+
+  const submit = () => {
+    if (!form.year.trim()) { setError('Year is required.'); return; }
+    if (!form.make.trim()) { setError('Make is required.'); return; }
+    if (!form.model.trim()) { setError('Model is required.'); return; }
+    if (!/^\d{4}$/.test(form.year.trim()) || +form.year < 1950 || +form.year > new Date().getFullYear()+2) {
+      setError('Enter a valid 4-digit year.'); return;
+    }
+    onAdd({ ...form, year:form.year.trim(), make:form.make.trim(), model:form.model.trim(), engine:form.engine.trim()||'N/A', vin:form.vin.trim()||'—', id:Date.now() });
+    onClose();
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">ADD VEHICLE</div>
+        <div className="modal-sub">REGISTER A NEW VEHICLE TO YOUR GARAGE</div>
+        {error && <div className="modal-error">⚠ {error}</div>}
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Year *</label>
+            <input className="form-input" placeholder="2022" value={form.year} onChange={set('year')} maxLength={4}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Make *</label>
+            <input className="form-input" placeholder="Toyota" value={form.make} onChange={set('make')}/>
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Model *</label>
+            <input className="form-input" placeholder="Camry" value={form.model} onChange={set('model')}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Engine</label>
+            <input className="form-input" placeholder="2.5L 4-cyl" value={form.engine} onChange={set('engine')}/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">VIN (optional)</label>
+          <input className="form-input" placeholder="1HGBH41JXMN109186" value={form.vin} onChange={set('vin')} maxLength={17}/>
+        </div>
+        <div style={{display:'flex',gap:10,marginTop:4}}>
+          <button className="btn-secondary" onClick={onClose}>CANCEL</button>
+          <button className="btn-primary" onClick={submit}>REGISTER VEHICLE</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteVehicleModal({ vehicle, onClose, onConfirm }) {
+  return (
+    <div className="modal-backdrop" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal" style={{width:380}}>
+        <div className="modal-title">REMOVE VEHICLE</div>
+        <div className="modal-sub">THIS ACTION CANNOT BE UNDONE</div>
+        <div style={{background:'var(--bg-surface)',border:'1px solid var(--border-mid)',borderRadius:'var(--radius-md)',padding:16,marginBottom:20}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--cyan)',letterSpacing:2}}>{vehicle.year}</div>
+          <div style={{fontFamily:'var(--font-display)',fontSize:22,letterSpacing:2,color:'var(--text-primary)'}}>{vehicle.make} {vehicle.model}</div>
+          <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:4}}>{vehicle.engine}</div>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button className="btn-secondary" onClick={onClose}>CANCEL</button>
+          <button style={{flex:1,padding:12,background:'rgba(255,45,45,.15)',border:'1px solid rgba(255,45,45,.4)',borderRadius:'var(--radius-sm)',color:'var(--red-alert)',fontFamily:'var(--font-display)',fontSize:18,letterSpacing:3,cursor:'pointer'}} onClick={onConfirm}>
+            REMOVE
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsDrawer({ user, token, onClose, model, setModel, language, setLanguage, apiKeys, onSaveKeys, onLogout, toast }) {
+  const [keys,    setKeys]    = useState({...apiKeys});
+  const [showKeys,setShowKeys]= useState({openai:false,gemini:false,grok:false,claude:false});
+  const [saving,  setSaving]  = useState(false);
+  const setKey = k => e => setKeys(ks=>({...ks,[k]:e.target.value}));
+
+  const providers = [
+    {key:'openai', label:'OpenAI', ph:'sk-...'},
+    {key:'gemini', label:'Gemini', ph:'AIza...'},
+    {key:'grok',   label:'Grok',   ph:'xai-...'},
+    {key:'claude', label:'Claude', ph:'sk-ant-...'},
+  ];
+  const models = [
+    {id:'chatgpt', label:'ChatGPT'},
+    {id:'gemini',  label:'Gemini'},
+    {id:'grok',    label:'Grok'},
+    {id:'claude',  label:'Claude'},
+  ];
+  const langs = [
+    {id:'en', label:'English'},
+    {id:'es', label:'Español'},
+    {id:'fr', label:'Français'},
+    {id:'si', label:'සිංහල'},
+  ];
+
+  const saveKeys = async () => {
+    setSaving(true);
+    try {
+      const res  = await fetch(`${BACKEND_URL}/api/auth/apikeys`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify(keys)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error||'Failed to save keys');
+      onSaveKeys(keys);
+      toast('API keys saved & encrypted on server ✓','success');
+      onClose();
+    } catch(e) {
+      toast(e.message, 'error');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <>
+      <div className="settings-overlay" onClick={onClose}/>
+      <div className="settings-drawer">
+        <div className="drawer-header">
+          <div className="drawer-title">SETTINGS</div>
+          <button className="close-x" onClick={onClose}>✕</button>
+        </div>
+        <div className="drawer-body">
+
+          {}
+          <div className="drawer-section">
+            <div className="drawer-section-title">Operator Profile</div>
+            <div className="user-badge">
+              <div className="user-avatar-lg">{(user?.name||'U')[0].toUpperCase()}</div>
+              <div>
+                <div className="user-name-text">{user?.name||'Guest'}</div>
+                <div className="user-email-text">{user?.email||'—'}</div>
+              </div>
+            </div>
+            <button className="logout-btn" onClick={onLogout}>⏻ LOGOUT</button>
+          </div>
+
+          {}
+          <div className="drawer-section">
+            <div className="drawer-section-title">AI Model</div>
+            <div className="seg-control">
+              {models.map(m=>(
+                <button key={m.id} className={`seg-btn${model===m.id?' seg-active':''}`} onClick={()=>setModel(m.id)}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {}
+          <div className="drawer-section">
+            <div className="drawer-section-title">Language</div>
+            <div className="seg-control">
+              {langs.map(l=>(
+                <button key={l.id} className={`seg-btn${language===l.id?' seg-active':''}`} onClick={()=>setLanguage(l.id)}>
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {}
+          <div className="drawer-section">
+            <div className="drawer-section-title">API Keys — Encrypted & Saved</div>
+            <p style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',marginBottom:12,letterSpacing:.5,lineHeight:1.7}}>
+              🔒 Keys are AES-256-GCM encrypted on the server.
+            </p>
+            {providers.map(p=>(
+              <div key={p.key} className="key-input-row">
+                <span className="key-provider-label">{p.label}</span>
+                <div style={{flex:1,position:'relative'}}>
+                  <input className="key-input" type={showKeys[p.key]?'text':'password'} placeholder={p.ph} value={keys[p.key]} onChange={setKey(p.key)} style={{paddingRight:34,width:'100%'}}/>
+                  <button onClick={()=>setShowKeys(s=>({...s,[p.key]:!s[p.key]}))} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--text-dim)',cursor:'pointer',fontSize:12,padding:2}}>
+                    {showKeys[p.key]?'🙈':'👁'}
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button className="save-keys-btn" onClick={saveKeys} disabled={saving}>
+              {saving ? '⌛ SAVING...' : '🔒 SAVE & ENCRYPT KEYS'}
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </>
+  );
+}
+
+function formatMessage(text) {
+  
+  const escaped = text
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+  return escaped
+    .replace(/\n/g,'<br/>')
+    .replace(/\b([PBCU]\d{4})\b/g,'<code style="color:var(--cyan);font-weight:700;letter-spacing:1px;font-family:var(--font-mono)">$1</code>')
+    .replace(/⚠️([^\n<]{1,200})/g,'<span style="color:var(--yellow-warn)">⚠️$1</span>')
+    .replace(/✅([^\n<]{1,200})/g,'<span style="color:var(--green-ok)">✅$1</span>');
+}
+
+function MessageBubble({ msg }) {
+  const isUser = msg.role==='user';
+  return (
+    <div className={`message-row${isUser?' user':''}`}>
+      <div className={`avatar ${isUser?'avatar-user':'avatar-doc'}`}>{isUser?'YOU':'AD'}</div>
+      <div className={`bubble ${isUser?'bubble-user':'bubble-doc'}`}>
+        <div className="bubble-sender">{isUser?'OPERATOR':'AUTODOC AI'}</div>
+        <div dangerouslySetInnerHTML={{__html:formatMessage(msg.content)}}/>
+        <div className="bubble-time">{msg.time}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ── DTC DETAIL ── */
+function DtcDetail({ dtc, onAsk, onClose }) {
+  const info = DTC_INFO[dtc.code] || { desc:dtc.desc, cause:'Unknown', action:'Consult a certified mechanic for further diagnosis.' };
+  return (
+    <div className="dtc-detail">
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:4}}>
+        <div className="dtc-detail-code">{dtc.code}</div>
+        <button onClick={onClose} style={{background:'none',border:'none',color:'var(--text-dim)',cursor:'pointer',fontSize:14,padding:2}}>✕</button>
+      </div>
+      <div className="dtc-detail-desc">{info.desc}</div>
+      <div className="dtc-detail-info">
+        <strong style={{color:'var(--text-cyan)'}}>Likely causes:</strong> {info.cause}<br/>
+        <strong style={{color:'var(--text-cyan)'}}>Suggested action:</strong> {info.action}
+      </div>
+      <button className="dtc-ask-btn" onClick={()=>onAsk(dtc.code, info.desc)}>
+        ⚡ Ask AutoDoc about {dtc.code}
+      </button>
+    </div>
+  );
+}
+
+/* ── DASHBOARD TAB ── */
+function DashboardTab({ vehicle }) {
+  const label = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'No vehicle selected';
+  const cards = [
+    {label:'ACTIVE DTCS',val:'3',icon:'🔴',type:'crit'},
+    {label:'LAST SCAN',val:'2h',icon:'🕐',type:'info'},
+    {label:'HEALTH SCORE',val:'74%',icon:'💚',type:'ok'},
+    {label:'OPEN TASKS',val:'5',icon:'🔧',type:'warn'},
+    {label:'FUEL RANGE',val:'341km',icon:'⛽',type:'info'},
+    {label:'ENGINE LOAD',val:'18%',icon:'⚙️',type:'ok'},
+  ];
+  return (
+    <div style={{flex:1,overflow:'auto'}}>
+      <div style={{padding:'14px 20px 0',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--cyan)',letterSpacing:2}}>
+        VEHICLE STATUS — {label.toUpperCase()}
+      </div>
+      <div className="dashboard-grid">
+        {cards.map((c,i)=>(
+          <div key={i} className={`stat-card ${c.type}`}>
+            <div className="stat-icon">{c.icon}</div>
+            <div className="stat-val">{c.val}</div>
+            <div className="stat-lbl">{c.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── MAIN APP ── */
+function App() {
+  const [user,        setUser]        = useState(null);
+  const [authToken,   setAuthToken]   = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  /* On mount: check saved cookie token */
+  useEffect(() => {
+    const token = getCookie(COOKIE_NAME);
+    if (!token) { setAuthLoading(false); return; }
+    fetch(`${BACKEND_URL}/api/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.user) { setUser(data.user); setAuthToken(token); }
+      else deleteCookie(COOKIE_NAME);
+    })
+    .catch(() => deleteCookie(COOKIE_NAME))
+    .finally(() => setAuthLoading(false));
+  }, []);
+
+  /* Load encrypted API keys from server when user is set */
+  useEffect(() => {
+    const token = authToken || getCookie(COOKIE_NAME);
+    if (!token) return;
+    fetch(`${BACKEND_URL}/api/auth/apikeys`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(r => r.json())
+    .then(data => { if (data.keys) setApiKeys(data.keys); })
+    .catch(() => {});
+  }, [authToken]);
+
+  /* state */
+  const [tab, setTab]                 = useState('chat');
+  const [messages, setMessages]       = useState([]);
+  const [input, setInput]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [model, setModel]             = useState('chatgpt');
+  const [language, setLanguage]       = useState('en');
+  const [vehicles, setVehicles]       = useState(INIT_VEHICLES);
+  const [activeVehicleId, setActiveV] = useState(1);
+  const [sessions, setSessions]       = useState([
+    {id:1,title:'Engine misfire P0300',date:'Mar 12',severity:'critical',messages:[]},
+    {id:2,title:'AC compressor noise',date:'Mar 08',severity:'warning',messages:[]},
+    {id:3,title:'Battery drain diagnosis',date:'Feb 28',severity:'info',messages:[]},
+    {id:4,title:'Pre-trip inspection',date:'Feb 20',severity:'ok',messages:[]},
+  ]);
+  const [activeSessionId, setActiveSess] = useState(null);
+  const [showAddVehicle, setShowAV]   = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showSettings, setShowSett]   = useState(false);
+  const [apiKeys, setApiKeys]         = useState({openai:'',gemini:'',grok:'',claude:''});
+  const [sessionID]                   = useState(sessionId());
+  const [activeDtc, setActiveDtc]     = useState(null);
+  const [mobileNav, setMobileNav]     = useState(false);
+  const { toasts, toast }             = useToast();
+
+  const bottomRef   = useRef(null);
+  const textareaRef = useRef(null);
+  const t = TRANSLATIONS[language];
+  const activeVehicle = vehicles.find(v=>v.id===activeVehicleId) || null;
+
+  useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:'smooth'}); }, [messages, loading]);
+
+  /* textarea auto-resize */
+  const handleInput = e => {
+    setInput(e.target.value);
+    const ta = textareaRef.current;
+    if(ta){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,140)+'px'; }
+  };
+
+  /* send — uses ref to avoid stale closure */
+  const inputRef = useRef('');
+  useEffect(()=>{ inputRef.current = input; }, [input]);
+
+  const send = useCallback(async (overrideText) => {
+    const msg = (overrideText ?? inputRef.current).trim();
+    if(!msg || loading) return;
+    setInput('');
+    if(textareaRef.current){ textareaRef.current.style.height='auto'; }
+
+    const userMsg = {role:'user', content:msg, time:nowTime()};
+    setMessages(prev=>[...prev,userMsg]);
+    setLoading(true);
+
+    try {
+      const currentMsgs = [...messages, userMsg];
+      const body = {
+        model, message:msg, language,
+        history: currentMsgs.slice(-10).map(m=>({role:m.role,content:m.content})),
+        ...(apiKeys.openai  && {userOpenAiKey:apiKeys.openai}),
+        ...(apiKeys.gemini  && {userGeminiKey:apiKeys.gemini}),
+        ...(apiKeys.grok    && {userGrokKey:apiKeys.grok}),
+        ...(apiKeys.claude  && {userClaudeKey:apiKeys.claude}),
+      };
+      const res  = await fetch(`${BACKEND_URL}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error||'Backend error');
+      const aiMsg = {role:'assistant',content:data.response,time:nowTime()};
+      setMessages(prev=>{
+        const updated=[...prev,aiMsg];
+        /* auto-save session */
+        const title = msg.slice(0,40)+(msg.length>40?'…':'');
+        const sev   = guessSessionSeverity(updated);
+        setSessions(ss=>{
+          if(activeSessionId){ return ss.map(s=>s.id===activeSessionId?{...s,messages:updated,severity:sev}:s); }
+          const newSess={id:Date.now(),title,date:todayStr(),severity:sev,messages:updated};
+          setActiveSess(newSess.id);
+          return [newSess,...ss];
+        });
+        return updated;
+      });
+    } catch(err) {
+      setMessages(prev=>[...prev,{role:'assistant',content:`⚠️ SYSTEM ERROR: ${err.message}`,time:nowTime()}]);
+      toast(err.message,'error');
+    } finally { setLoading(false); }
+  }, [loading, model, language, apiKeys, messages, activeSessionId, toast]);
+
+  const handleKeyDown = e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} };
+
+  /* load a previous session */
+  const loadSession = sess => {
+    setMessages(sess.messages);
+    setActiveSess(sess.id);
+    setTab('chat');
+    setMobileNav(false);
+    toast(`Loaded: ${sess.title}`,'info',2000);
+  };
+
+  /* add vehicle */
+  const addVehicle = v => {
+    setVehicles(vs=>[...vs,v]);
+    setActiveV(v.id);
+    toast(`${v.year} ${v.make} ${v.model} added to garage`,'success');
+  };
+
+  /* delete vehicle */
+  const confirmDelete = () => {
+    if(!deleteTarget) return;
+    setVehicles(vs=>vs.filter(v=>v.id!==deleteTarget.id));
+    if(activeVehicleId===deleteTarget.id){
+      const remaining = vehicles.filter(v=>v.id!==deleteTarget.id);
+      setActiveV(remaining.length>0?remaining[0].id:null);
+    }
+    toast(`${deleteTarget.make} ${deleteTarget.model} removed`,'info');
+    setDeleteTarget(null);
+  };
+
+  /* ask about DTC code from right panel */
+  const askAboutDtc = (code, desc) => {
+    setTab('chat');
+    setActiveDtc(null);
+    setTimeout(()=>send(`Tell me about fault code ${code} (${desc}). What are the most likely causes and what should I check first?`),100);
+  };
+
+  /* clear session */
+  const clearSession = () => {
+    setMessages([]);
+    setActiveSess(null);
+  };
+
+  if (authLoading) return (
+    <div style={{height:'100vh',height:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-void)'}}>
+      <div style={{textAlign:'center'}}>
+        <div style={{width:44,height:44,background:'linear-gradient(135deg,var(--cyan),#0099cc)',clipPath:'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--font-display)',fontSize:11,color:'#000',fontWeight:900,animation:'pulse-icon 3s ease-in-out infinite'}}>AD</div>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--cyan)',letterSpacing:3,marginTop:12,opacity:.8}}>LOADING...</div>
+      </div>
+    </div>
+  );
+
+  if (!user) return <AuthScreen onLogin={(u, token) => { setUser(u); setAuthToken(token); }}/>;
+
+  return (
+    <div className="app">
+      {/* mobile sidebar overlay */}
+      <div className={`sidebar-overlay${mobileNav?'':' hidden'}`} onClick={()=>setMobileNav(false)}/>
+
+      {/* ── TOPBAR ── */}
+      <header className="topbar">
+        <div className="logo-mark">
+          <button className="menu-btn" onClick={()=>setMobileNav(n=>!n)}>☰</button>
+          <div className="logo-icon">AD</div>
+          <div>
+            <div className="logo-text">AUTODOC</div>
+            <div className="logo-sub">AI Diagnostic System</div>
+          </div>
+        </div>
+        <div className="topbar-center">
+          <div className="status-dot"/>
+          <span className="status-label">SYSTEM ONLINE</span>
+        </div>
+        <div className="topbar-right">
+          <Clock/>
+          <div className="nav-pill">
+            <button className="nav-pill-btn" onClick={()=>setShowSett(true)}>⚙ Settings</button>
+            <button className="nav-pill-btn" onClick={()=>setShowAV(true)}>＋ Vehicle</button>
+          </div>
+        </div>
+      </header>
+
+      {/* ── LEFT SIDEBAR ── */}
+      <aside className={`sidebar-left${mobileNav?' mobile-open':''}`}>
+        <div className="sidebar-section">
+          <div className="sidebar-label">Garage ({vehicles.length})</div>
+          {vehicles.length===0 && (
+            <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--text-dim)',textAlign:'center',padding:'12px 0',letterSpacing:1}}>
+              NO VEHICLES REGISTERED
+            </div>
+          )}
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {vehicles.map(v=>(
+              <div key={v.id} className={`vehicle-card${activeVehicleId===v.id?' active':''}`} onClick={()=>{ setActiveV(v.id); setMobileNav(false); }}>
+                <div className="vehicle-year">{v.year}</div>
+                <div className="vehicle-name">{v.make}<br/>{v.model}</div>
+                <div className="vehicle-sub">{v.engine}</div>
+                <button
+                  className="vehicle-del-btn"
+                  title="Remove vehicle"
+                  onClick={e=>{ e.stopPropagation(); setDeleteTarget(v); }}
+                >✕</button>
+              </div>
+            ))}
+          </div>
+          <button className="add-vehicle-btn" onClick={()=>setShowAV(true)}>＋ Add Vehicle</button>
+        </div>
+
+        <div className="sidebar-section" style={{flex:1}}>
+          <div className="sidebar-label">Sessions ({sessions.length})</div>
+          <div style={{display:'flex',flexDirection:'column',gap:4}}>
+            {sessions.map(s=>(
+              <div key={s.id} className={`history-item${activeSessionId===s.id?' active-session':''}`} onClick={()=>loadSession(s)}>
+                <div className="history-title">{s.title}</div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:4}}>
+                  <span className="history-meta">{s.date}</span>
+                  <span className={`severity-badge severity-${s.severity}`}>{s.severity.toUpperCase()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      {/* ── MAIN CONTENT ── */}
+      <main className="main-content">
+        <div className="tab-bar">
+          {[['chat','⚡ DIAGNOSTIC CHAT'],['dashboard','📊 VEHICLE STATUS']].map(([id,label])=>(
+            <button key={id} className={`tab-btn${tab===id?' active':''}`} onClick={()=>setTab(id)}>{label}</button>
+          ))}
+          <div style={{flex:1}}/>
+          <div style={{padding:'8px 12px',display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',letterSpacing:1}}>{model.toUpperCase()}</span>
+            <span style={{color:'var(--border-mid)'}}>·</span>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',letterSpacing:1}}>{language.toUpperCase()}</span>
+          </div>
+        </div>
+
+        {tab==='dashboard' ? <DashboardTab vehicle={activeVehicle}/> : (
+          <>
+            <div className="messages-viewport">
+              {messages.length===0 && (
+                <div className="system-message">
+                  <div className="system-banner">
+                    <div className="system-banner-title">🔧 AUTODOC ONLINE</div>
+                    <div className="system-banner-sub" style={{whiteSpace:'pre-line',textAlign:'center',lineHeight:1.8}}>{t.welcome}</div>
+                    {activeVehicle && (
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--cyan)',letterSpacing:2,marginTop:4,padding:'6px 12px',background:'var(--cyan-soft)',border:'1px solid var(--cyan-dim)',borderRadius:'var(--radius-sm)'}}>
+                        ACTIVE VEHICLE: {activeVehicle.year} {activeVehicle.make.toUpperCase()} {activeVehicle.model.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="quick-prompts">
+                      {QUICK_PROMPTS.map((q,i)=>(
+                        <button key={i} className="quick-btn" onClick={()=>send(q)}>{q}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {messages.map((m,i)=><MessageBubble key={i} msg={m}/>)}
+              {loading && (
+                <div className="typing-row">
+                  <div className="avatar avatar-doc">AD</div>
+                  <div className="typing-bubble">
+                    <div className="typing-dot"/><div className="typing-dot"/><div className="typing-dot"/>
+                    <span className="typing-label">ANALYSING</span>
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef}/>
+            </div>
+
+            <div className="input-area">
+              <div className="input-warning"><div className="input-warning-dot"/>{t.warning}</div>
+              <div className="input-row">
+                <textarea
+                  ref={textareaRef}
+                  className="chat-textarea"
+                  value={input}
+                  onChange={handleInput}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t.placeholder}
+                  rows={1}
+                />
+                <button className="send-btn" disabled={loading||!input.trim()} onClick={()=>send()}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                </button>
+              </div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8}}>
+                <span style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',letterSpacing:2}}>
+                  SESSION {sessionID}
+                  {activeSessionId && <span style={{color:'var(--cyan)',marginLeft:8}}>· SAVING</span>}
+                </span>
+                <button
+                  onClick={clearSession}
+                  style={{background:'none',border:'none',color:'var(--text-dim)',fontFamily:'var(--font-mono)',fontSize:9,cursor:'pointer',letterSpacing:1,transition:'color .2s'}}
+                  onMouseEnter={e=>e.target.style.color='var(--red-alert)'}
+                  onMouseLeave={e=>e.target.style.color='var(--text-dim)'}
+                >CLEAR SESSION</button>
+              </div>
+            </div>
+          </>
+        )}
+      </main>
+
+      {/* ── RIGHT SIDEBAR ── */}
+      <aside className="sidebar-right">
+        <div className="diag-panel">
+          <div className="sidebar-label">Live Telemetry</div>
+          <div className="gauge-row">
+            {GAUGES.map((g,i)=><GaugeCard key={i} {...g}/>)}
+          </div>
+
+          <div className="sidebar-label" style={{marginTop:16}}>Active Fault Codes</div>
+          <div className="dtc-list">
+            {Object.entries(DTC_INFO).map(([code, info])=>{
+              const level = code==='P0300'?'critical':code==='P0420'?'warning':'info';
+              return (
+                <React.Fragment key={code}>
+                  <div className="dtc-item" onClick={()=>setActiveDtc(activeDtc===code?null:code)}>
+                    <div className={`dtc-indicator ${level}`}/>
+                    <span className="dtc-item-code">{code}</span>
+                    <span className="dtc-item-desc">{info.desc}</span>
+                  </div>
+                  {activeDtc===code && (
+                    <DtcDetail
+                      dtc={{code,desc:info.desc}}
+                      onAsk={askAboutDtc}
+                      onClose={()=>setActiveDtc(null)}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+
+          <div className="sidebar-label" style={{marginTop:16}}>System Checklist</div>
+          <div className="checklist">
+            {CHECKLIST.map((c,i)=>(
+              <div key={i} className="check-item">
+                <span className="check-icon">{c.icon}</span><span>{c.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      {/* ── MODALS ── */}
+      {showAddVehicle && <AddVehicleModal onClose={()=>setShowAV(false)} onAdd={addVehicle}/>}
+      {deleteTarget   && <DeleteVehicleModal vehicle={deleteTarget} onClose={()=>setDeleteTarget(null)} onConfirm={confirmDelete}/>}
+      {showSettings && <SettingsDrawer user={user} token={authToken||getCookie(COOKIE_NAME)} onClose={()=>setShowSett(false)} model={model} setModel={setModel} language={language} setLanguage={setLanguage} apiKeys={apiKeys} onSaveKeys={k=>setApiKeys(k)} onLogout={()=>{ deleteCookie(COOKIE_NAME); setUser(null); setAuthToken(null); setShowSett(false); }} toast={toast}/>}
+
+      <ToastContainer toasts={toasts}/>
+    </div>
+  );
+}
+
+/* ── COOKIE HELPERS ── */
+const COOKIE_NAME = 'autodoc_token';
+function setCookie(name, value, days) {
+  const exp      = new Date(Date.now() + days * 864e5).toUTCString();
+  const isSecure = location.protocol === 'https:' ? ';Secure' : '';
+  document.cookie = `${name}=${encodeURIComponent(value)};expires=${exp};path=/;SameSite=Strict${isSecure}`;
+}
+function getCookie(name) {
+  const found = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+  if (!found) return null;
+  try { return decodeURIComponent(found.split('=').slice(1).join('=')); } catch { return null; }
+}
+function deleteCookie(name) {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+}
+
+/* ── AUTH SCREEN ── */
+function AuthScreen({ onLogin }) {
+  const [tab,    setTab]    = useState('login');
+  const [name,   setName]   = useState('');
+  const [email,  setEmail]  = useState('');
+  const [pass,   setPass]   = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [error,  setError]  = useState('');
+  const [loading,setLoading]= useState(false);
+
+  const submit = async () => {
+    setError('');
+    if (tab === 'signup' && !name.trim()) { setError('Name is required.'); return; }
+    if (!email.trim()) { setError('Email is required.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Enter a valid email address.'); return; }
+    if (!pass) { setError('Password is required.'); return; }
+    if (tab === 'signup' && pass.length < 6) { setError('Password must be at least 6 characters.'); return; }
+
+    setLoading(true);
+    try {
+      const endpoint = tab === 'login' ? '/api/auth/login' : '/api/auth/signup';
+      const body = tab === 'login'
+        ? { email: email.trim(), password: pass }
+        : { name: name.trim(), email: email.trim(), password: pass };
+
+      const res  = await fetch(`${BACKEND_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Something went wrong.'); return; }
+
+      setCookie(COOKIE_NAME, data.token, 30);
+      onLogin(data.user, data.token);
+    } catch (e) {
+      setError('Cannot reach server. Check that the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-wrap">
+      <div style={{width:420,maxWidth:'96vw'}}>
+        {/* Logo */}
+        <div style={{textAlign:'center',marginBottom:28}}>
+          <div style={{width:56,height:56,background:'linear-gradient(135deg,var(--cyan),#0099cc)',clipPath:'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--font-display)',fontSize:13,color:'#000',fontWeight:900,marginBottom:14,animation:'pulse-icon 3s ease-in-out infinite'}}>AD</div>
+          <div style={{fontFamily:'var(--font-display)',fontSize:36,letterSpacing:6,color:'var(--text-primary)',lineHeight:1}}>AUTODOC</div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:9,letterSpacing:3,color:'var(--cyan)',marginTop:8,opacity:.8}}>AI DIAGNOSTIC SYSTEM</div>
+        </div>
+
+        <div style={{background:'var(--bg-panel)',border:'1px solid var(--border-mid)',borderRadius:'var(--radius-lg)',padding:28,position:'relative',overflow:'hidden'}}>
+          <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:'linear-gradient(90deg,var(--cyan),transparent)'}}/>
+
+          {/* Tabs */}
+          <div className="auth-tabs">
+            <button className={`auth-tab${tab==='login'?' active':''}`} onClick={()=>{ setTab('login'); setError(''); }}>LOGIN</button>
+            <button className={`auth-tab${tab==='signup'?' active':''}`} onClick={()=>{ setTab('signup'); setError(''); }}>SIGN UP</button>
+          </div>
+
+          {error && <div className="modal-error">⚠ {error}</div>}
+
+          {tab==='signup' && (
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <input className="form-input" placeholder="Your name" value={name}
+                onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()}/>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input className="form-input" type="email" placeholder="you@example.com" value={email}
+              onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()}/>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password {tab==='signup'&&<span style={{color:'var(--text-dim)',fontSize:9}}>(min 6 chars)</span>}</label>
+            <div className="pw-row">
+              <input className="form-input" type={showPw?'text':'password'} placeholder={tab==='login'?'Your password':'Create a password'} value={pass}
+                style={{paddingRight:44}} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()}/>
+              <button className="pw-toggle" onClick={()=>setShowPw(v=>!v)} title={showPw?'Hide':'Show'}>
+                {showPw ? '🙈' : '👁'}
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="auth-loading"><div className="auth-spinner"/>{tab==='login'?'AUTHENTICATING...':'CREATING ACCOUNT...'}</div>
+          ) : (
+            <button className="btn-primary" onClick={submit}>
+              {tab==='login' ? 'INITIALIZE SESSION' : 'CREATE ACCOUNT'}
+            </button>
+          )}
+
+          <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',textAlign:'center',marginTop:14,letterSpacing:1,lineHeight:1.8}}>
+            {tab==='login'
+              ? 'CREDENTIALS STORED IN COOKIE · 30-DAY SESSION'
+              : 'PASSWORDS ARE HASHED · DATA STORED LOCALLY'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
