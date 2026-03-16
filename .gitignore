@@ -1,0 +1,11 @@
+node_modules/
+.wrangler/
+dist/
+.dev.vars
+*.env
+.env
+.env.local
+*.bak
+.DS_Store
+Thumbs.db
+start-local.sh

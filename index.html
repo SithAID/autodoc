@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoDoc — AI Car Diagnostics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Exo+2:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#07090e; --panel:#0c1220; --surface:#101828; --raised:#162234;
+  --b1:#1e3048; --b2:#2a4468;
+  --amber:#00d4ff; --amber2:#0099bb; --amber-s:rgba(0,212,255,.07); --amber-g:rgba(0,212,255,.18);
+  --red:#ff2d2d; --green:#00e5a0; --blue:#4db8ff; --yellow:#ffd600;
+  --t1:#c4dff0; --t2:#5c8aaa; --t3:#305070; --ta:#ff8c40;
+  --fd:'Orbitron',sans-serif; --fu:'Exo 2',sans-serif; --fm:'JetBrains Mono',monospace;
+  --r1:4px; --r2:8px; --r3:12px;
+  --tr:all .2s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--t1);font-family:var(--fu);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:9999;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--panel);} ::-webkit-scrollbar-thumb{background:var(--amber2);border-radius:2px;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.nav-logo-hex{width:32px;height:32px;background:var(--amber);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:12px;color:#000;font-weight:900;animation:hex-pulse 3s ease-in-out infinite;}
+@keyframes hex-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4);}50%{box-shadow:0 0 16px 4px rgba(0,212,255,.12);}}
+.nav-logo-text{font-family:var(--fd);font-size:24px;letter-spacing:4px;color:var(--t1);}
+.nav-links{display:flex;align-items:center;gap:4px;}
+.nav-link{padding:7px 16px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);text-decoration:none;border-radius:var(--r1);transition:var(--tr);border:1px solid transparent;}
+.nav-link:hover{color:var(--t1);background:var(--surface);}
+.nav-link.active{color:var(--amber);border-color:var(--amber2);background:var(--amber-s);}
+.nav-cta{padding:8px 20px;background:var(--amber);border:none;border-radius:var(--r1);font-family:var(--fd);font-size:18px;letter-spacing:2px;color:#000;cursor:pointer;transition:var(--tr);text-decoration:none;display:inline-flex;align-items:center;}
+.nav-cta:hover{background:#00b8d9;box-shadow:0 0 20px rgba(0,212,255,.3);transform:translateY(-1px);}
+.hamburger{display:none;flex-direction:column;gap:4px;background:none;border:none;cursor:pointer;padding:4px;}
+.hamburger span{width:22px;height:2px;background:var(--t2);border-radius:1px;transition:var(--tr);}
+
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding-top:60px;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 60% 40%,rgba(0,212,255,.07) 0%,transparent 65%),radial-gradient(ellipse 40% 50% at 20% 70%,rgba(77,184,255,.04) 0%,transparent 60%);}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--b1) 1px,transparent 1px),linear-gradient(90deg,var(--b1) 1px,transparent 1px);background-size:60px 60px;opacity:.4;}
+.hero-inner{max-width:1200px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:60px;width:100%;}
+.hero-eyebrow{font-family:var(--fm);font-size:10px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.hero-eyebrow::before{content:'';width:30px;height:1px;background:var(--amber);}
+.hero-h1{font-family:var(--fd);font-size:clamp(52px,6vw,88px);line-height:.95;letter-spacing:2px;color:var(--t1);margin-bottom:24px;}
+.hero-h1 span{color:var(--amber);}
+.hero-desc{font-size:17px;line-height:1.7;color:var(--t2);max-width:480px;margin-bottom:36px;}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+.btn-hero{padding:14px 32px;background:var(--amber);border:none;border-radius:var(--r1);font-family:var(--fd);font-size:22px;letter-spacing:3px;color:#000;cursor:pointer;transition:var(--tr);text-decoration:none;display:inline-flex;align-items:center;}
+.btn-hero:hover{background:#00b8d9;box-shadow:0 4px 30px rgba(0,212,255,.35);transform:translateY(-2px);}
+.btn-ghost{padding:14px 32px;background:transparent;border:1px solid var(--b2);border-radius:var(--r1);font-family:var(--fd);font-size:22px;letter-spacing:3px;color:var(--t2);cursor:pointer;transition:var(--tr);text-decoration:none;display:inline-flex;align-items:center;}
+.btn-ghost:hover{border-color:var(--amber2);color:var(--amber);background:var(--amber-s);}
+.hero-stats{display:flex;gap:32px;margin-top:40px;padding-top:32px;border-top:1px solid var(--b1);}
+.hero-stat-val{font-family:var(--fd);font-size:40px;letter-spacing:2px;color:var(--amber);line-height:1;}
+.hero-stat-lbl{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;margin-top:4px;}
+
+.scanner-wrap{position:relative;}
+.scanner-card{background:var(--panel);border:1px solid var(--b2);border-radius:var(--r3);overflow:hidden;position:relative;}
+.scanner-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),rgba(0,212,255,.3),transparent);}
+.scanner-header{padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.scanner-title{font-family:var(--fm);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;}
+.scanner-dots{display:flex;gap:6px;}
+.scanner-dot{width:8px;height:8px;border-radius:50%;}
+.scanner-body{padding:20px;}
+.gauge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.mini-gauge{background:var(--surface);border:1px solid var(--b1);border-radius:var(--r2);padding:12px;text-align:center;}
+.mg-val{font-family:var(--fd);font-size:26px;letter-spacing:1px;line-height:1;}
+.mg-unit{font-family:var(--fm);font-size:8px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;}
+.mg-lbl{font-family:var(--fm);font-size:8px;letter-spacing:1.5px;color:var(--t2);text-transform:uppercase;margin-top:3px;}
+.mg-bar{height:2px;background:var(--b1);border-radius:1px;margin-top:6px;overflow:hidden;}
+.mg-fill{height:100%;border-radius:1px;}
+.dtc-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--r1);margin-bottom:6px;}
+.dtc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dtc-dot.c{background:var(--red);box-shadow:0 0 6px var(--red);}
+.dtc-dot.w{background:var(--yellow);box-shadow:0 0 6px var(--yellow);}
+.dtc-dot.i{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+.dtc-code{font-family:var(--fm);font-size:11px;font-weight:700;color:var(--amber);letter-spacing:1px;min-width:46px;}
+.dtc-desc{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);animation:scan 3s linear infinite;opacity:.6;}
+@keyframes scan{0%{top:-2px;}100%{top:100%;}}
+
+.section{padding:100px 40px;max-width:1200px;margin:0 auto;}
+.section-eye{font-family:var(--fm);font-size:9px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:14px;}
+.section-h2{font-family:var(--fd);font-size:clamp(36px,4vw,56px);letter-spacing:2px;color:var(--t1);margin-bottom:16px;line-height:1.05;}
+.section-h2 span{color:var(--amber);}
+.section-sub{font-size:16px;color:var(--t2);max-width:560px;line-height:1.7;margin-bottom:56px;}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.feat-card{background:var(--panel);border:1px solid var(--b1);border-radius:var(--r3);padding:28px 24px;position:relative;overflow:hidden;transition:var(--tr);}
+.feat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;transform:scaleX(0);transform-origin:left;transition:transform .3s ease;}
+.feat-card:hover{border-color:var(--b2);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.feat-card:hover::after{transform:scaleX(1);}
+.feat-card.a::after{background:var(--amber);}
+.feat-card.b::after{background:var(--green);}
+.feat-card.c::after{background:var(--blue);}
+.feat-card.d::after{background:var(--yellow);}
+.feat-card.e::after{background:var(--red);}
+.feat-card.f::after{background:var(--amber);}
+.feat-icon{font-size:28px;margin-bottom:16px;}
+.feat-title{font-family:var(--fd);font-size:22px;letter-spacing:2px;color:var(--t1);margin-bottom:10px;}
+.feat-desc{font-size:13px;color:var(--t2);line-height:1.7;}
+
+.how-section{background:var(--panel);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:100px 40px;}
+.how-inner{max-width:1200px;margin:0 auto;}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;}
+.steps::before{content:'';position:absolute;top:28px;left:12.5%;right:12.5%;height:1px;background:linear-gradient(90deg,transparent,var(--b2),var(--amber),var(--b2),transparent);}
+.step{text-align:center;padding:0 20px;}
+.step-num{width:56px;height:56px;background:var(--surface);border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:18px;color:var(--amber);margin:0 auto 20px;position:relative;z-index:1;}
+.step-title{font-family:var(--fd);font-size:20px;letter-spacing:2px;color:var(--t1);margin-bottom:10px;}
+.step-desc{font-size:13px;color:var(--t2);line-height:1.7;}
+
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.testi-card{background:var(--panel);border:1px solid var(--b1);border-radius:var(--r3);padding:24px;position:relative;}
+.testi-card::before{content:'"';position:absolute;top:16px;right:20px;font-family:var(--fd);font-size:60px;color:var(--amber);opacity:.15;line-height:1;}
+.testi-text{font-size:14px;color:var(--t2);line-height:1.75;margin-bottom:20px;font-style:italic;}
+.testi-author{display:flex;align-items:center;gap:12px;}
+.testi-avatar{width:36px;height:36px;border-radius:var(--r1);background:var(--amber-s);border:1px solid var(--amber2);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:16px;color:var(--amber);}
+.testi-name{font-family:var(--fd);font-size:16px;letter-spacing:1px;color:var(--t1);}
+.testi-role{font-family:var(--fm);font-size:9px;letter-spacing:1.5px;color:var(--t3);margin-top:2px;}
+
+.cta-section{padding:100px 40px;text-align:center;position:relative;overflow:hidden;}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(0,212,255,.06) 0%,transparent 70%);}
+.cta-h2{font-family:var(--fd);font-size:clamp(40px,5vw,72px);letter-spacing:3px;color:var(--t1);margin-bottom:16px;}
+.cta-h2 span{color:var(--amber);}
+.cta-sub{font-size:17px;color:var(--t2);margin-bottom:40px;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.7;}
+
+footer{background:var(--panel);border-top:1px solid var(--b1);padding:40px;}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px;}
+.footer-copy{font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1px;}
+.footer-links{display:flex;gap:20px;}
+.footer-link{font-family:var(--fm);font-size:10px;color:var(--t3);text-decoration:none;letter-spacing:1px;transition:var(--tr);}
+.footer-link:hover{color:var(--amber);}
+
+.fade-up{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease;}
+.fade-up.visible{opacity:1;transform:translateY(0);}
+
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr;}.scanner-wrap{display:none;}
+  .features-grid{grid-template-columns:1fr 1fr;}
+  .steps{grid-template-columns:1fr 1fr;}.steps::before{display:none;}
+  .testi-grid{grid-template-columns:1fr;}
+  nav{padding:0 20px;}.hero-inner{padding:0 20px;}
+  .hamburger{display:flex;}
+  .nav-links{display:none;position:fixed;top:60px;left:0;right:0;background:var(--panel);border-bottom:1px solid var(--b1);flex-direction:column;padding:16px;gap:4px;}
+  .nav-links.open{display:flex;}
+}
+@media(max-width:600px){.features-grid{grid-template-columns:1fr;}.steps{grid-template-columns:1fr;}.footer-inner{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a class="nav-logo" href="/">
+    <div class="nav-logo-hex">AD</div>
+    <span class="nav-logo-text">AUTODOC</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a class="nav-link active" href="/">Home</a>
+    <a class="nav-link" href="/dashboard/">Dashboard</a>
+    <a class="nav-link" href="/blog/">Blog</a>
+    <a class="nav-link" href="/about/">About Us</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a class="nav-cta" href="/autodoc/">Launch App</a>
+    <button class="hamburger" id="hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">AI-Powered Diagnostics</div>
+      <h1 class="hero-h1">YOUR CAR<br/>TALKS TO<br/><span>AUTODOC</span></h1>
+      <p class="hero-desc">Professional-grade vehicle diagnostics powered by AI. Decode fault codes, identify symptoms, and get repair guidance — in seconds, not hours.</p>
+      <div class="hero-actions">
+        <a class="btn-hero" href="/autodoc/">START DIAGNOSIS</a>
+        <a class="btn-ghost" href="/about/">HOW IT WORKS</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-val">50K+</div><div class="hero-stat-lbl">Diagnoses run</div></div>
+        <div><div class="hero-stat-val">98%</div><div class="hero-stat-lbl">Accuracy rate</div></div>
+        <div><div class="hero-stat-val">4</div><div class="hero-stat-lbl">AI models</div></div>
+      </div>
+    </div>
+    <div class="scanner-wrap">
+      <div class="scanner-card">
+        <div class="scan-line"></div>
+        <div class="scanner-header">
+          <span class="scanner-title">Live Telemetry — 2019 Toyota Camry</span>
+          <div class="scanner-dots">
+            <div class="scanner-dot" style="background:var(--red)"></div>
+            <div class="scanner-dot" style="background:var(--yellow)"></div>
+            <div class="scanner-dot" style="background:var(--green)"></div>
+          </div>
+        </div>
+        <div class="scanner-body">
+          <div class="gauge-grid">
+            <div class="mini-gauge"><div class="mg-val" style="color:#00d4ff">94</div><div class="mg-unit">°C</div><div class="mg-lbl">Engine Temp</div><div class="mg-bar"><div class="mg-fill" style="width:72%;background:#00d4ff"></div></div></div>
+            <div class="mini-gauge"><div class="mg-val" style="color:#00e5a0">780</div><div class="mg-unit">RPM</div><div class="mg-lbl">Engine Speed</div><div class="mg-bar"><div class="mg-fill" style="width:14%;background:#00e5a0"></div></div></div>
+            <div class="mini-gauge"><div class="mg-val" style="color:#4db8ff">12.6</div><div class="mg-unit">V</div><div class="mg-lbl">Battery</div><div class="mg-bar"><div class="mg-fill" style="width:85%;background:#4db8ff"></div></div></div>
+            <div class="mini-gauge"><div class="mg-val" style="color:#ffd600">61</div><div class="mg-unit">%</div><div class="mg-lbl">Fuel Level</div><div class="mg-bar"><div class="mg-fill" style="width:61%;background:#ffd600"></div></div></div>
+          </div>
+          <div class="dtc-row"><div class="dtc-dot c"></div><span class="dtc-code">P0300</span><span class="dtc-desc">Random/Multiple Misfire Detected</span></div>
+          <div class="dtc-row"><div class="dtc-dot w"></div><span class="dtc-code">P0420</span><span class="dtc-desc">Catalyst System Efficiency Low</span></div>
+          <div class="dtc-row"><div class="dtc-dot i"></div><span class="dtc-code">B1000</span><span class="dtc-desc">ECU Internal Fault</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<div style="border-top:1px solid var(--b1);">
+<div class="section fade-up">
+  <div class="section-eye">Core Capabilities</div>
+  <h2 class="section-h2">BUILT FOR <span>REAL</span> MECHANICS</h2>
+  <p class="section-sub">AutoDoc combines four frontier AI models with deep automotive knowledge to give you the most accurate diagnosis possible.</p>
+  <div class="features-grid">
+    <div class="feat-card a fade-up"><div class="feat-icon">🔍</div><div class="feat-title">OBD-II DECODER</div><div class="feat-desc">Instant interpretation of all P, B, C, U fault codes with likely causes and repair priorities ranked by probability.</div></div>
+    <div class="feat-card b fade-up"><div class="feat-icon">🤖</div><div class="feat-title">4-MODEL AI</div><div class="feat-desc">Switch between ChatGPT, Gemini, Grok, and Claude. Auto-fallback keeps you running even when one model hits quota.</div></div>
+    <div class="feat-card c fade-up"><div class="feat-icon">⚡</div><div class="feat-title">LIVE TELEMETRY</div><div class="feat-desc">Real-time engine data display including temperature, RPM, battery voltage, and fuel level — all in one dashboard.</div></div>
+    <div class="feat-card d fade-up"><div class="feat-icon">🌍</div><div class="feat-title">MULTILINGUAL</div><div class="feat-desc">Full support for English, Spanish, and French. Diagnose in your native language with no loss of technical precision.</div></div>
+    <div class="feat-card e fade-up"><div class="feat-icon">🚗</div><div class="feat-title">GARAGE MANAGER</div><div class="feat-desc">Store multiple vehicles. Diagnoses are linked to the active vehicle so your history stays organised and searchable.</div></div>
+    <div class="feat-card f fade-up"><div class="feat-icon">🛡️</div><div class="feat-title">SAFETY FIRST</div><div class="feat-desc">AutoDoc detects safety-critical conditions — brake failure, fuel leaks, steering loss — and immediately escalates.</div></div>
+  </div>
+</div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how-section">
+  <div class="how-inner">
+    <div style="text-align:center;margin-bottom:56px;">
+      <div class="section-eye" style="justify-content:center;display:flex;">Process</div>
+      <h2 class="section-h2" style="text-align:center;">HOW <span>AUTODOC</span> WORKS</h2>
+    </div>
+    <div class="steps">
+      <div class="step fade-up"><div class="step-num">01</div><div class="step-title">DESCRIBE</div><div class="step-desc">Tell AutoDoc your vehicle make, model, year and what symptoms you're experiencing.</div></div>
+      <div class="step fade-up" style="animation-delay:.1s"><div class="step-num">02</div><div class="step-title">SCAN</div><div class="step-desc">AutoDoc queries the selected AI model with deep automotive system knowledge built-in.</div></div>
+      <div class="step fade-up" style="animation-delay:.2s"><div class="step-num">03</div><div class="step-title">DIAGNOSE</div><div class="step-desc">Receive a ranked list of probable causes, DTC explanations, and repair complexity ratings.</div></div>
+      <div class="step fade-up" style="animation-delay:.3s"><div class="step-num">04</div><div class="step-title">REPAIR</div><div class="step-desc">Follow the guided next steps — DIY, workshop visit, or specialist referral — with confidence.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div style="border-top:1px solid var(--b1);">
+<div class="section fade-up">
+  <div class="section-eye">Trusted by Mechanics</div>
+  <h2 class="section-h2">WHAT PEOPLE <span>SAY</span></h2>
+  <div class="testi-grid">
+    <div class="testi-card fade-up"><p class="testi-text">AutoDoc diagnosed a P0300 misfire in 30 seconds that my workshop scan tool missed for two days. Saved me hundreds in labour.</p><div class="testi-author"><div class="testi-avatar">RK</div><div><div class="testi-name">RAJ KUMARA</div><div class="testi-role">DIY Mechanic · Colombo</div></div></div></div>
+    <div class="testi-card fade-up"><p class="testi-text">I use it before every customer estimate now. The AI gives me a second opinion on DTC codes that I can cross-reference. Brilliant tool.</p><div class="testi-author"><div class="testi-avatar">SP</div><div><div class="testi-name">SARA PEREIRA</div><div class="testi-role">Auto Technician · Kandy</div></div></div></div>
+    <div class="testi-card fade-up"><p class="testi-text">The multilingual support is a game changer. My customers speak Sinhala and I can now explain faults clearly with AutoDoc's help.</p><div class="testi-author"><div class="testi-avatar">DW</div><div><div class="testi-name">DILAN WIJERATNE</div><div class="testi-role">Workshop Owner · Galle</div></div></div></div>
+  </div>
+</div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div style="position:relative;z-index:1;">
+    <div class="section-eye" style="justify-content:center;display:flex;margin-bottom:16px;">Ready to Diagnose?</div>
+    <h2 class="cta-h2">STOP GUESSING.<br/>START <span>SCANNING</span>.</h2>
+    <p class="cta-sub">Join thousands of drivers and mechanics who trust AutoDoc for fast, accurate vehicle diagnostics.</p>
+    <a class="btn-hero" href="/autodoc/">LAUNCH AUTODOC FREE</a>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div style="font-family:var(--fd);font-size:20px;letter-spacing:3px;color:var(--t1);margin-bottom:8px;">AUTODOC</div>
+      <div class="footer-copy">© 2025 AutoDoc · Imesh S Abeysinghe · AI-Assisted Diagnostics · Not a substitute for a certified mechanic</div>
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="/">HOME</a>
+      <a class="footer-link" href="/dashboard/">DASHBOARD</a>
+      <a class="footer-link" href="/blog/">BLOG</a>
+      <a class="footer-link" href="/about/">ABOUT</a>
+      <a class="footer-link" href="/autodoc/">APP</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:.15});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
