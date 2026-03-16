@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoDoc — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Exo+2:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07090e;--panel:#0c1220;--surface:#101828;--raised:#162234;
+  --b1:#1e3048;--b2:#2a4468;
+  --amber:#00d4ff;--amber2:#0099bb;--amber-s:rgba(0,212,255,.07);--amber-g:rgba(0,212,255,.18);
+  --red:#ff2d2d;--green:#00e5a0;--blue:#4db8ff;--yellow:#ffd600;
+  --t1:#c4dff0;--t2:#5c8aaa;--t3:#305070;--ta:#ff8c40;
+  --fd:'Orbitron',sans-serif;--fu:'Exo 2',sans-serif;--fm:'JetBrains Mono',monospace;
+  --r1:4px;--r2:8px;--r3:12px;--tr:all .2s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--t1);font-family:var(--fu);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:9999;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--panel);} ::-webkit-scrollbar-thumb{background:var(--amber2);border-radius:2px;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.nav-logo-hex{width:32px;height:32px;background:var(--amber);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:12px;color:#000;font-weight:900;}
+.nav-logo-text{font-family:var(--fd);font-size:24px;letter-spacing:4px;color:var(--t1);}
+.nav-links{display:flex;align-items:center;gap:4px;}
+.nav-link{padding:7px 16px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);text-decoration:none;border-radius:var(--r1);transition:var(--tr);border:1px solid transparent;}
+.nav-link:hover{color:var(--t1);background:var(--surface);}
+.nav-link.active{color:var(--amber);border-color:var(--amber2);background:var(--amber-s);}
+.nav-cta{padding:8px 20px;background:var(--amber);border:none;border-radius:var(--r1);font-family:var(--fd);font-size:18px;letter-spacing:2px;color:#000;cursor:pointer;transition:var(--tr);text-decoration:none;}
+.nav-cta:hover{background:#00b8d9;}
+.hamburger{display:none;flex-direction:column;gap:4px;background:none;border:none;cursor:pointer;padding:4px;}
+.hamburger span{width:22px;height:2px;background:var(--t2);border-radius:1px;}
+
+/* PAGE */
+.page{padding-top:60px;min-height:100vh;}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;height:calc(100vh - 60px);}
+
+/* SIDEBAR */
+.dash-sidebar{background:var(--panel);border-right:1px solid var(--b1);padding:20px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.sidebar-section-label{font-family:var(--fm);font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;padding:8px 10px 4px;display:flex;align-items:center;gap:8px;}
+.sidebar-section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--b2),transparent);}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r1);cursor:pointer;transition:var(--tr);border:1px solid transparent;text-decoration:none;color:var(--t2);font-size:13px;font-weight:600;letter-spacing:.5px;}
+.sidebar-nav-item:hover{background:var(--surface);border-color:var(--b1);color:var(--t1);}
+.sidebar-nav-item.active{background:var(--amber-s);border-color:var(--amber2);color:var(--amber);}
+.sidebar-nav-icon{font-size:15px;flex-shrink:0;width:18px;text-align:center;}
+.vehicle-pill{background:var(--surface);border:1px solid var(--b2);border-radius:var(--r2);padding:12px;margin-bottom:4px;cursor:pointer;transition:var(--tr);}
+.vehicle-pill:hover{border-color:var(--amber2);}
+.vehicle-pill.sel{border-color:var(--amber);background:var(--amber-s);}
+.vp-year{font-family:var(--fm);font-size:9px;color:var(--amber);letter-spacing:2px;}
+.vp-name{font-family:var(--fd);font-size:17px;letter-spacing:1px;color:var(--t1);margin:2px 0;}
+.vp-eng{font-size:11px;color:var(--t2);}
+
+/* MAIN DASHBOARD */
+.dash-main{overflow-y:auto;padding:24px;}
+.dash-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.dash-vehicle-label{font-family:var(--fd);font-size:28px;letter-spacing:3px;color:var(--t1);}
+.dash-vehicle-sub{font-family:var(--fm);font-size:10px;color:var(--amber);letter-spacing:2px;margin-top:2px;}
+.dash-actions{display:flex;gap:10px;}
+.dash-btn{padding:8px 18px;font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:var(--surface);border:1px solid var(--b2);border-radius:var(--r1);color:var(--t2);cursor:pointer;transition:var(--tr);text-decoration:none;}
+.dash-btn:hover{border-color:var(--amber2);color:var(--amber);}
+.dash-btn.primary{background:var(--amber);color:#000;border-color:var(--amber);}
+.dash-btn.primary:hover{background:#00b8d9;}
+
+/* STAT ROW */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--panel);border:1px solid var(--b1);border-radius:var(--r2);padding:16px 18px;position:relative;overflow:hidden;transition:var(--tr);}
+.stat-card:hover{border-color:var(--b2);}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.stat-card.ok::after{background:var(--green);}
+.stat-card.warn::after{background:var(--yellow);}
+.stat-card.crit::after{background:var(--red);}
+.stat-card.info::after{background:var(--blue);}
+.stat-icon{font-size:20px;margin-bottom:10px;}
+.stat-val{font-family:var(--fd);font-size:34px;letter-spacing:2px;line-height:1;margin-bottom:4px;}
+.stat-card.ok .stat-val{color:var(--green);}
+.stat-card.warn .stat-val{color:var(--yellow);}
+.stat-card.crit .stat-val{color:var(--red);}
+.stat-card.info .stat-val{color:var(--blue);}
+.stat-lbl{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;}
+
+/* GRID */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.dash-grid.wide{grid-template-columns:1fr;}
+.panel-card{background:var(--panel);border:1px solid var(--b1);border-radius:var(--r3);overflow:hidden;}
+.panel-header{padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-family:var(--fm);font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;}
+.panel-badge{font-family:var(--fm);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:2px;}
+.badge-red{background:rgba(255,45,45,.15);color:var(--red);border:1px solid rgba(255,45,45,.3);}
+.badge-green{background:rgba(0,229,160,.1);color:var(--green);border:1px solid rgba(0,229,160,.25);}
+.badge-yellow{background:rgba(255,214,0,.1);color:var(--yellow);border:1px solid rgba(255,214,0,.3);}
+.panel-body{padding:16px;}
+
+/* GAUGES */
+.gauge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.gauge-item{background:var(--surface);border:1px solid var(--b1);border-radius:var(--r2);padding:12px;text-align:center;}
+.gi-val{font-family:var(--fd);font-size:28px;letter-spacing:1px;line-height:1;}
+.gi-unit{font-family:var(--fm);font-size:8px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;}
+.gi-label{font-family:var(--fm);font-size:8px;letter-spacing:1.5px;color:var(--t2);text-transform:uppercase;margin-top:4px;}
+.gi-bar{height:3px;background:var(--b1);border-radius:2px;margin-top:8px;overflow:hidden;}
+.gi-fill{height:100%;border-radius:2px;transition:width 1.5s ease;}
+
+/* DTC TABLE */
+.dtc-table{width:100%;border-collapse:collapse;}
+.dtc-table th{font-family:var(--fm);font-size:9px;letter-spacing:2px;color:var(--t3);text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid var(--b1);}
+.dtc-table td{padding:10px 12px;border-bottom:1px solid var(--b1);font-size:13px;}
+.dtc-table tr:last-child td{border-bottom:none;}
+.dtc-table tr:hover td{background:var(--surface);}
+.dtc-code-cell{font-family:var(--fm);font-weight:700;color:var(--amber);letter-spacing:1px;}
+.dtc-sev{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:2px;font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.sev-c{background:rgba(255,45,45,.15);color:var(--red);border:1px solid rgba(255,45,45,.3);}
+.sev-w{background:rgba(255,214,0,.1);color:var(--yellow);border:1px solid rgba(255,214,0,.3);}
+.sev-i{background:rgba(77,184,255,.1);color:var(--blue);border:1px solid rgba(77,184,255,.25);}
+.dtc-dot-inline{width:6px;height:6px;border-radius:50%;display:inline-block;}
+
+/* HEALTH SCORE */
+.health-ring-wrap{display:flex;align-items:center;gap:24px;}
+.health-ring{position:relative;width:100px;height:100px;flex-shrink:0;}
+.health-ring svg{transform:rotate(-90deg);}
+.health-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.health-pct{font-family:var(--fd);font-size:30px;letter-spacing:1px;color:var(--green);line-height:1;}
+.health-lbl{font-family:var(--fm);font-size:8px;letter-spacing:2px;color:var(--t3);}
+.health-checks{display:flex;flex-direction:column;gap:8px;flex:1;}
+.health-check{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--t2);}
+.hc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* ACTIVITY */
+.activity-list{display:flex;flex-direction:column;gap:0;}
+.activity-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--b1);}
+.activity-item:last-child{border-bottom:none;}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.activity-text{flex:1;font-size:13px;color:var(--t2);}
+.activity-text strong{color:var(--t1);font-weight:600;}
+.activity-time{font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:.5px;white-space:nowrap;}
+
+/* CHART BARS */
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:80px;padding:8px 0;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar{width:100%;border-radius:2px 2px 0 0;background:var(--amber-s);border:1px solid var(--amber2);transition:height .8s ease;position:relative;cursor:pointer;}
+.bar:hover{background:var(--amber-g);}
+.bar-label{font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:1px;}
+
+/* ALERT BANNER */
+.alert-banner{display:flex;align-items:center;gap:12px;padding:12px 18px;background:rgba(255,45,45,.1);border:1px solid rgba(255,45,45,.3);border-radius:var(--r2);margin-bottom:20px;}
+.alert-icon{font-size:18px;flex-shrink:0;}
+.alert-text{flex:1;font-size:13px;color:var(--t1);}
+.alert-text strong{color:var(--red);}
+.alert-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:2px;transition:var(--tr);}
+.alert-dismiss:hover{color:var(--red);}
+
+@media(max-width:900px){
+  .dash-layout{grid-template-columns:1fr;}.dash-sidebar{display:none;}
+  .stat-row{grid-template-columns:1fr 1fr;}.dash-grid{grid-template-columns:1fr;}
+  nav{padding:0 20px;}.hamburger{display:flex;}
+  .nav-links{display:none;position:fixed;top:60px;left:0;right:0;background:var(--panel);border-bottom:1px solid var(--b1);flex-direction:column;padding:16px;gap:4px;}
+  .nav-links.open{display:flex;}
+}
+@media(max-width:600px){.stat-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="nav-logo-hex">AD</div>
+    <span class="nav-logo-text">AUTODOC</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a class="nav-link" href="/">Home</a>
+    <a class="nav-link active" href="/dashboard/">Dashboard</a>
+    <a class="nav-link" href="/blog/">Blog</a>
+    <a class="nav-link" href="/about/">About Us</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a class="nav-cta" href="/autodoc/">Launch App</a>
+    <button class="hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="page">
+<div class="dash-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-sidebar">
+    <div class="sidebar-section-label">Navigation</div>
+    <a class="sidebar-nav-item active" href="/dashboard/"><span class="sidebar-nav-icon">📊</span>Overview</a>
+    <a class="sidebar-nav-item" href="/autodoc/"><span class="sidebar-nav-icon">⚡</span>Diagnostic Chat</a>
+    <a class="sidebar-nav-item" href="#"><span class="sidebar-nav-icon">🔍</span>Fault Codes</a>
+    <a class="sidebar-nav-item" href="#"><span class="sidebar-nav-icon">📈</span>Telemetry</a>
+    <a class="sidebar-nav-item" href="#"><span class="sidebar-nav-icon">🗓️</span>Service History</a>
+
+    <div class="sidebar-section-label" style="margin-top:12px;">Garage</div>
+    <div class="vehicle-pill sel" onclick="selectVehicle(1)">
+      <div class="vp-year">2019</div>
+      <div class="vp-name">Toyota Camry</div>
+      <div class="vp-eng">2.5L 4-cyl</div>
+    </div>
+    <div class="vehicle-pill" onclick="selectVehicle(2)">
+      <div class="vp-year">2021</div>
+      <div class="vp-name">Ford F-150</div>
+      <div class="vp-eng">3.5L EcoBoost</div>
+    </div>
+    <button onclick="window.location.href='/autodoc/'" style="margin-top:8px;width:100%;padding:9px;background:transparent;border:1px dashed var(--b2);border-radius:var(--r2);color:var(--t3);font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:var(--tr);text-transform:uppercase;" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--t3)'">＋ Add Vehicle</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+
+    <div class="alert-banner" id="alert-banner">
+      <span class="alert-icon">🔴</span>
+      <div class="alert-text"><strong>CRITICAL:</strong> Fault code P0300 (Random Misfire) active on 2019 Toyota Camry. Immediate inspection recommended.</div>
+      <button class="alert-dismiss" onclick="document.getElementById('alert-banner').style.display='none'">✕</button>
+    </div>
+
+    <div class="dash-topbar">
+      <div>
+        <div class="dash-vehicle-label" id="vehicle-label">2019 TOYOTA CAMRY</div>
+        <div class="dash-vehicle-sub" id="vehicle-sub">VIN: 4T1B11HK... · 2.5L 4-cyl · Last scan: 2 hours ago</div>
+      </div>
+      <div class="dash-actions">
+        <a class="dash-btn" href="/autodoc/">⚡ New Diagnosis</a>
+        <button class="dash-btn primary" onclick="alert('Export feature — connect to backend')">↓ Export Report</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-row">
+      <div class="stat-card crit"><div class="stat-icon">🔴</div><div class="stat-val">3</div><div class="stat-lbl">Active Fault Codes</div></div>
+      <div class="stat-card ok"><div class="stat-icon">💚</div><div class="stat-val">74%</div><div class="stat-lbl">Health Score</div></div>
+      <div class="stat-card warn"><div class="stat-icon">🔧</div><div class="stat-val">5</div><div class="stat-lbl">Open Tasks</div></div>
+      <div class="stat-card info"><div class="stat-icon">⛽</div><div class="stat-val">341km</div><div class="stat-lbl">Fuel Range</div></div>
+    </div>
+
+    <!-- GAUGE + HEALTH -->
+    <div class="dash-grid">
+      <div class="panel-card">
+        <div class="panel-header"><span class="panel-title">Live Telemetry</span><span class="panel-badge badge-green">● LIVE</span></div>
+        <div class="panel-body">
+          <div class="gauge-grid">
+            <div class="gauge-item"><div class="gi-val" style="color:#00d4ff">94</div><div class="gi-unit">°C</div><div class="gi-label">Engine Temp</div><div class="gi-bar"><div class="gi-fill" style="width:72%;background:#00d4ff" id="bar-temp"></div></div></div>
+            <div class="gauge-item"><div class="gi-val" style="color:#00e5a0">780</div><div class="gi-unit">RPM</div><div class="gi-label">Engine Speed</div><div class="gi-bar"><div class="gi-fill" style="width:14%;background:#00e5a0"></div></div></div>
+            <div class="gauge-item"><div class="gi-val" style="color:#4db8ff">12.6</div><div class="gi-unit">V</div><div class="gi-label">Battery</div><div class="gi-bar"><div class="gi-fill" style="width:85%;background:#4db8ff"></div></div></div>
+            <div class="gauge-item"><div class="gi-val" style="color:#ffd600">61</div><div class="gi-unit">%</div><div class="gi-label">Fuel Level</div><div class="gi-bar"><div class="gi-fill" style="width:61%;background:#ffd600"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header"><span class="panel-title">System Health</span><span class="panel-badge badge-yellow">ATTENTION</span></div>
+        <div class="panel-body">
+          <div class="health-ring-wrap">
+            <div class="health-ring">
+              <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#1e242d" stroke-width="8"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#00e5a0" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="65.3" stroke-linecap="round"/>
+              </svg>
+              <div class="health-center"><div class="health-pct">74%</div><div class="health-lbl">HEALTH</div></div>
+            </div>
+            <div class="health-checks">
+              <div class="health-check"><div class="hc-dot" style="background:var(--red);box-shadow:0 0 5px var(--red)"></div>Engine Misfire Active</div>
+              <div class="health-check"><div class="hc-dot" style="background:var(--yellow);box-shadow:0 0 5px var(--yellow)"></div>Catalyst Efficiency Low</div>
+              <div class="health-check"><div class="hc-dot" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>Brakes OK</div>
+              <div class="health-check"><div class="hc-dot" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>Tyres OK</div>
+              <div class="health-check"><div class="hc-dot" style="background:var(--blue);box-shadow:0 0 5px var(--blue)"></div>Transmission OK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DTC TABLE -->
+    <div class="panel-card" style="margin-bottom:20px;">
+      <div class="panel-header"><span class="panel-title">Active Fault Codes (DTC)</span><span class="panel-badge badge-red">3 ACTIVE</span></div>
+      <div class="panel-body" style="padding:0;">
+        <table class="dtc-table">
+          <thead><tr><th>Code</th><th>Description</th><th>System</th><th>Severity</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td class="dtc-code-cell">P0300</td><td style="color:var(--t1);font-weight:600">Random/Multiple Misfire</td><td style="color:var(--t2);font-size:12px">Engine</td><td><span class="dtc-sev sev-c"><span class="dtc-dot-inline" style="background:var(--red);box-shadow:0 0 4px var(--red)"></span>CRITICAL</span></td><td><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none">ASK AUTODOC →</a></td></tr>
+            <tr><td class="dtc-code-cell">P0420</td><td style="color:var(--t1);font-weight:600">Catalyst Below Threshold B1</td><td style="color:var(--t2);font-size:12px">Emissions</td><td><span class="dtc-sev sev-w"><span class="dtc-dot-inline" style="background:var(--yellow);box-shadow:0 0 4px var(--yellow)"></span>WARNING</span></td><td><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none">ASK AUTODOC →</a></td></tr>
+            <tr><td class="dtc-code-cell">B1000</td><td style="color:var(--t1);font-weight:600">ECU Internal Fault</td><td style="color:var(--t2);font-size:12px">Electronics</td><td><span class="dtc-sev sev-i"><span class="dtc-dot-inline" style="background:var(--blue);box-shadow:0 0 4px var(--blue)"></span>INFO</span></td><td><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none">ASK AUTODOC →</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SCAN HISTORY + ACTIVITY -->
+    <div class="dash-grid">
+      <div class="panel-card">
+        <div class="panel-header"><span class="panel-title">Weekly Scan Activity</span></div>
+        <div class="panel-body">
+          <div class="bar-chart" id="bar-chart"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;">
+            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">MON</span>
+            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">TUE</span>
+            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">WED</span>
+            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">THU</span>
+            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">FRI</span>
+            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">SAT</span>
+            <span style="font-family:var(--fm);font-size:9px;color:var(--amber)">TODAY</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header"><span class="panel-title">Recent Activity</span></div>
+        <div class="panel-body" style="padding:4px 16px;">
+          <div class="activity-list">
+            <div class="activity-item"><div class="activity-dot" style="background:var(--red)"></div><div class="activity-text"><strong>P0300 detected</strong> — Engine misfire flagged during scan</div><div class="activity-time">2h ago</div></div>
+            <div class="activity-item"><div class="activity-dot" style="background:var(--amber)"></div><div class="activity-text"><strong>Diagnostic session</strong> — AC compressor diagnosis</div><div class="activity-time">Mar 12</div></div>
+            <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div class="activity-text"><strong>P0420 resolved</strong> — Catalyst sensor replaced</div><div class="activity-time">Mar 08</div></div>
+            <div class="activity-item"><div class="activity-dot" style="background:var(--blue)"></div><div class="activity-text"><strong>Vehicle added</strong> — Ford F-150 registered</div><div class="activity-time">Mar 05</div></div>
+            <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div class="activity-text"><strong>Oil change logged</strong> — 5,000km service complete</div><div class="activity-time">Feb 28</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<script>
+const vehicles = {
+  1:{label:'2019 TOYOTA CAMRY',sub:'VIN: 4T1B11HK... · 2.5L 4-cyl · Last scan: 2 hours ago'},
+  2:{label:'2021 FORD F-150',sub:'VIN: 1FTEW1EP... · 3.5L EcoBoost · Last scan: 5 days ago'}
+};
+function selectVehicle(id){
+  document.querySelectorAll('.vehicle-pill').forEach((p,i)=>p.classList.toggle('sel',i+1===id));
+  document.getElementById('vehicle-label').textContent = vehicles[id].label;
+  document.getElementById('vehicle-sub').textContent   = vehicles[id].sub;
+}
+
+const heights=[30,50,20,70,45,80,90];
+const bc = document.getElementById('bar-chart');
+heights.forEach((h,i)=>{
+  const col=document.createElement('div'); col.className='bar-col';
+  const bar=document.createElement('div'); bar.className='bar';
+  bar.style.cssText=`height:${h}%;transition:height .8s ${i*.08}s ease;`;
+  const lbl=document.createElement('div'); lbl.className='bar-label'; lbl.textContent=h;
+  col.appendChild(bar); col.appendChild(lbl); bc.appendChild(col);
+});
+</script>
+</body>
+</html>
