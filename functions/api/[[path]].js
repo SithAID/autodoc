@@ -245,6 +245,7 @@ async function callChatGPT(msg, lang, hist, key, env) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${k}` },
       body: JSON.stringify({ model: models[i], messages: msgs, temperature: 0.7, max_tokens: 700 }),
+      cf: { cacheEverything: false, cacheTtl: 0 },
     });
     if (r.ok) return (await r.json()).choices[0].message.content;
     const e = await r.json();
@@ -271,6 +272,7 @@ async function callGemini(msg, lang, hist, key, env) {
           contents: [{ parts: [{ text: SYSTEM_PROMPTS[lang] }], role: 'user' }, ...fh, { parts: [{ text: msg }], role: 'user' }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 700 },
         }),
+        cf: { cacheEverything: false, cacheTtl: 0 },
       });
       if (r.ok) return (await r.json()).candidates[0].content.parts[0].text;
       const e  = await r.json();
@@ -293,6 +295,7 @@ async function callGrok(msg, lang, hist, key, env) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${k}` },
     body: JSON.stringify({ model: 'grok-3', messages: msgs, temperature: 0.7, max_tokens: 700 }),
+    cf: { cacheEverything: false, cacheTtl: 0 },
   });
   if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Grok error'); }
   return (await r.json()).choices[0].message.content;
@@ -306,6 +309,7 @@ async function callClaude(msg, lang, hist, key, env) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 700, system: SYSTEM_PROMPTS[lang], messages: msgs }),
+    cf: { cacheEverything: false, cacheTtl: 0 },
   });
   if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Claude error'); }
   return (await r.json()).content[0].text;
