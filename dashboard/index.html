@@ -182,7 +182,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);
 <div class="page">
 <div class="dash-layout">
 
-  <!-- SIDEBAR -->
+  
   <aside class="dash-sidebar">
     <div class="sidebar-section-label">Navigation</div>
     <a class="sidebar-nav-item active" href="/dashboard/"><span class="sidebar-nav-icon">📊</span>Overview</a>
@@ -192,126 +192,78 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);
     <a class="sidebar-nav-item" href="#"><span class="sidebar-nav-icon">🗓️</span>Service History</a>
 
     <div class="sidebar-section-label" style="margin-top:12px;">Garage</div>
-    <div class="vehicle-pill sel" onclick="selectVehicle(1)">
-      <div class="vp-year">2019</div>
-      <div class="vp-name">Toyota Camry</div>
-      <div class="vp-eng">2.5L 4-cyl</div>
-    </div>
-    <div class="vehicle-pill" onclick="selectVehicle(2)">
-      <div class="vp-year">2021</div>
-      <div class="vp-name">Ford F-150</div>
-      <div class="vp-eng">3.5L EcoBoost</div>
-    </div>
+    <div id="garage-list"></div>
     <button onclick="window.location.href='/autodoc/'" style="margin-top:8px;width:100%;padding:9px;background:transparent;border:1px dashed var(--b2);border-radius:var(--r2);color:var(--t3);font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:var(--tr);text-transform:uppercase;" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--t3)'">＋ Add Vehicle</button>
   </aside>
 
-  <!-- MAIN -->
   <main class="dash-main">
 
-    <div class="alert-banner" id="alert-banner">
+    <div id="alert-banner" class="alert-banner" style="display:none;">
       <span class="alert-icon">🔴</span>
-      <div class="alert-text"><strong>CRITICAL:</strong> Fault code P0300 (Random Misfire) active on 2019 Toyota Camry. Immediate inspection recommended.</div>
+      <div class="alert-text" id="alert-text"></div>
       <button class="alert-dismiss" onclick="document.getElementById('alert-banner').style.display='none'">✕</button>
     </div>
 
     <div class="dash-topbar">
       <div>
-        <div class="dash-vehicle-label" id="vehicle-label">2019 TOYOTA CAMRY</div>
-        <div class="dash-vehicle-sub" id="vehicle-sub">VIN: 4T1B11HK... · 2.5L 4-cyl · Last scan: 2 hours ago</div>
+        <div class="dash-vehicle-label" id="vehicle-label">NO VEHICLE SELECTED</div>
+        <div class="dash-vehicle-sub" id="vehicle-sub">Open the AutoDoc app to add a vehicle</div>
       </div>
       <div class="dash-actions">
         <a class="dash-btn" href="/autodoc/">⚡ New Diagnosis</a>
-        <button class="dash-btn primary" onclick="alert('Export feature — connect to backend')">↓ Export Report</button>
       </div>
     </div>
 
-    <!-- STATS -->
     <div class="stat-row">
-      <div class="stat-card crit"><div class="stat-icon">🔴</div><div class="stat-val">3</div><div class="stat-lbl">Active Fault Codes</div></div>
-      <div class="stat-card ok"><div class="stat-icon">💚</div><div class="stat-val">74%</div><div class="stat-lbl">Health Score</div></div>
-      <div class="stat-card warn"><div class="stat-icon">🔧</div><div class="stat-val">5</div><div class="stat-lbl">Open Tasks</div></div>
-      <div class="stat-card info"><div class="stat-icon">⛽</div><div class="stat-val">341km</div><div class="stat-lbl">Fuel Range</div></div>
+      <div class="stat-card" id="stat-sessions"><div class="stat-icon">💬</div><div class="stat-val" id="stat-sessions-val">0</div><div class="stat-lbl">Diagnostic Sessions</div></div>
+      <div class="stat-card" id="stat-health"><div class="stat-icon">💚</div><div class="stat-val" id="stat-health-val">—</div><div class="stat-lbl">Overall Status</div></div>
+      <div class="stat-card" id="stat-vehicles"><div class="stat-icon">🚗</div><div class="stat-val" id="stat-vehicles-val">0</div><div class="stat-lbl">Vehicles in Garage</div></div>
+      <div class="stat-card info"><div class="stat-icon">🔄</div><div class="stat-val" id="stat-sync">LIVE</div><div class="stat-lbl">Sync Status</div></div>
     </div>
 
-    <!-- GAUGE + HEALTH -->
     <div class="dash-grid">
       <div class="panel-card">
-        <div class="panel-header"><span class="panel-title">Live Telemetry</span><span class="panel-badge badge-green">● LIVE</span></div>
-        <div class="panel-body">
-          <div class="gauge-grid">
-            <div class="gauge-item"><div class="gi-val" style="color:#00d4ff">94</div><div class="gi-unit">°C</div><div class="gi-label">Engine Temp</div><div class="gi-bar"><div class="gi-fill" style="width:72%;background:#00d4ff" id="bar-temp"></div></div></div>
-            <div class="gauge-item"><div class="gi-val" style="color:#00e5a0">780</div><div class="gi-unit">RPM</div><div class="gi-label">Engine Speed</div><div class="gi-bar"><div class="gi-fill" style="width:14%;background:#00e5a0"></div></div></div>
-            <div class="gauge-item"><div class="gi-val" style="color:#4db8ff">12.6</div><div class="gi-unit">V</div><div class="gi-label">Battery</div><div class="gi-bar"><div class="gi-fill" style="width:85%;background:#4db8ff"></div></div></div>
-            <div class="gauge-item"><div class="gi-val" style="color:#ffd600">61</div><div class="gi-unit">%</div><div class="gi-label">Fuel Level</div><div class="gi-bar"><div class="gi-fill" style="width:61%;background:#ffd600"></div></div></div>
+        <div class="panel-header"><span class="panel-title">Garage Overview</span><span class="panel-badge" id="garage-badge">NO DATA</span></div>
+        <div class="panel-body" id="garage-overview-body">
+          <div style="text-align:center;padding:24px 0;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2;">
+            NO VEHICLES REGISTERED<br/><span style="font-size:9px;opacity:.6">Open AutoDoc app to add your vehicle</span>
           </div>
         </div>
       </div>
 
       <div class="panel-card">
-        <div class="panel-header"><span class="panel-title">System Health</span><span class="panel-badge badge-yellow">ATTENTION</span></div>
-        <div class="panel-body">
-          <div class="health-ring-wrap">
-            <div class="health-ring">
-              <svg width="100" height="100" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#1e242d" stroke-width="8"/>
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#00e5a0" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="65.3" stroke-linecap="round"/>
-              </svg>
-              <div class="health-center"><div class="health-pct">74%</div><div class="health-lbl">HEALTH</div></div>
-            </div>
-            <div class="health-checks">
-              <div class="health-check"><div class="hc-dot" style="background:var(--red);box-shadow:0 0 5px var(--red)"></div>Engine Misfire Active</div>
-              <div class="health-check"><div class="hc-dot" style="background:var(--yellow);box-shadow:0 0 5px var(--yellow)"></div>Catalyst Efficiency Low</div>
-              <div class="health-check"><div class="hc-dot" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>Brakes OK</div>
-              <div class="health-check"><div class="hc-dot" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>Tyres OK</div>
-              <div class="health-check"><div class="hc-dot" style="background:var(--blue);box-shadow:0 0 5px var(--blue)"></div>Transmission OK</div>
-            </div>
+        <div class="panel-header"><span class="panel-title">Session History</span><span class="panel-badge" id="sessions-badge">0 SESSIONS</span></div>
+        <div class="panel-body" style="padding:4px 16px;" id="sessions-body">
+          <div style="text-align:center;padding:24px 0;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2;">
+            NO SESSIONS YET<br/><span style="font-size:9px;opacity:.6">Start a diagnosis in the AutoDoc app</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- DTC TABLE -->
     <div class="panel-card" style="margin-bottom:20px;">
-      <div class="panel-header"><span class="panel-title">Active Fault Codes (DTC)</span><span class="panel-badge badge-red">3 ACTIVE</span></div>
-      <div class="panel-body" style="padding:0;">
-        <table class="dtc-table">
-          <thead><tr><th>Code</th><th>Description</th><th>System</th><th>Severity</th><th>Action</th></tr></thead>
-          <tbody>
-            <tr><td class="dtc-code-cell">P0300</td><td style="color:var(--t1);font-weight:600">Random/Multiple Misfire</td><td style="color:var(--t2);font-size:12px">Engine</td><td><span class="dtc-sev sev-c"><span class="dtc-dot-inline" style="background:var(--red);box-shadow:0 0 4px var(--red)"></span>CRITICAL</span></td><td><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none">ASK AUTODOC →</a></td></tr>
-            <tr><td class="dtc-code-cell">P0420</td><td style="color:var(--t1);font-weight:600">Catalyst Below Threshold B1</td><td style="color:var(--t2);font-size:12px">Emissions</td><td><span class="dtc-sev sev-w"><span class="dtc-dot-inline" style="background:var(--yellow);box-shadow:0 0 4px var(--yellow)"></span>WARNING</span></td><td><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none">ASK AUTODOC →</a></td></tr>
-            <tr><td class="dtc-code-cell">B1000</td><td style="color:var(--t1);font-weight:600">ECU Internal Fault</td><td style="color:var(--t2);font-size:12px">Electronics</td><td><span class="dtc-sev sev-i"><span class="dtc-dot-inline" style="background:var(--blue);box-shadow:0 0 4px var(--blue)"></span>INFO</span></td><td><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none">ASK AUTODOC →</a></td></tr>
-          </tbody>
-        </table>
+      <div class="panel-header"><span class="panel-title">Diagnostic Sessions — Detail</span><span class="panel-badge" id="dtc-badge">0 ACTIVE</span></div>
+      <div class="panel-body" style="padding:0;" id="dtc-body">
+        <div style="text-align:center;padding:24px;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2;">
+          NO DIAGNOSTIC DATA<br/><span style="font-size:9px;opacity:.6">Run a session in AutoDoc to see results here</span>
+        </div>
       </div>
     </div>
 
-    <!-- SCAN HISTORY + ACTIVITY -->
     <div class="dash-grid">
       <div class="panel-card">
-        <div class="panel-header"><span class="panel-title">Weekly Scan Activity</span></div>
+        <div class="panel-header"><span class="panel-title">Weekly Session Activity</span></div>
         <div class="panel-body">
           <div class="bar-chart" id="bar-chart"></div>
-          <div style="display:flex;justify-content:space-between;margin-top:8px;">
-            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">MON</span>
-            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">TUE</span>
-            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">WED</span>
-            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">THU</span>
-            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">FRI</span>
-            <span style="font-family:var(--fm);font-size:9px;color:var(--t3)">SAT</span>
-            <span style="font-family:var(--fm);font-size:9px;color:var(--amber)">TODAY</span>
-          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;" id="bar-labels"></div>
         </div>
       </div>
 
       <div class="panel-card">
         <div class="panel-header"><span class="panel-title">Recent Activity</span></div>
         <div class="panel-body" style="padding:4px 16px;">
-          <div class="activity-list">
-            <div class="activity-item"><div class="activity-dot" style="background:var(--red)"></div><div class="activity-text"><strong>P0300 detected</strong> — Engine misfire flagged during scan</div><div class="activity-time">2h ago</div></div>
-            <div class="activity-item"><div class="activity-dot" style="background:var(--amber)"></div><div class="activity-text"><strong>Diagnostic session</strong> — AC compressor diagnosis</div><div class="activity-time">Mar 12</div></div>
-            <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div class="activity-text"><strong>P0420 resolved</strong> — Catalyst sensor replaced</div><div class="activity-time">Mar 08</div></div>
-            <div class="activity-item"><div class="activity-dot" style="background:var(--blue)"></div><div class="activity-text"><strong>Vehicle added</strong> — Ford F-150 registered</div><div class="activity-time">Mar 05</div></div>
-            <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div class="activity-text"><strong>Oil change logged</strong> — 5,000km service complete</div><div class="activity-time">Feb 28</div></div>
+          <div class="activity-list" id="activity-list">
+            <div style="text-align:center;padding:20px 0;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;">NO ACTIVITY YET</div>
           </div>
         </div>
       </div>
@@ -322,24 +274,265 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);
 </div>
 
 <script>
-const vehicles = {
-  1:{label:'2019 TOYOTA CAMRY',sub:'VIN: 4T1B11HK... · 2.5L 4-cyl · Last scan: 2 hours ago'},
-  2:{label:'2021 FORD F-150',sub:'VIN: 1FTEW1EP... · 3.5L EcoBoost · Last scan: 5 days ago'}
-};
-function selectVehicle(id){
-  document.querySelectorAll('.vehicle-pill').forEach((p,i)=>p.classList.toggle('sel',i+1===id));
-  document.getElementById('vehicle-label').textContent = vehicles[id].label;
-  document.getElementById('vehicle-sub').textContent   = vehicles[id].sub;
+const AUTODOC_STORAGE_KEY = 'autodoc_garage_v1';
+const AUTODOC_CHANNEL     = 'autodoc_sync';
+
+function loadGarageData() {
+  try {
+    const raw = localStorage.getItem(AUTODOC_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
 }
 
-const heights=[30,50,20,70,45,80,90];
-const bc = document.getElementById('bar-chart');
-heights.forEach((h,i)=>{
-  const col=document.createElement('div'); col.className='bar-col';
-  const bar=document.createElement('div'); bar.className='bar';
-  bar.style.cssText=`height:${h}%;transition:height .8s ${i*.08}s ease;`;
-  const lbl=document.createElement('div'); lbl.className='bar-label'; lbl.textContent=h;
-  col.appendChild(bar); col.appendChild(lbl); bc.appendChild(col);
+function el(id) { return document.getElementById(id); }
+
+function renderDashboard() {
+  const data = loadGarageData();
+  const vehicles = data ? (data.vehicles || []) : [];
+  const sessions = data ? (data.sessions || []) : [];
+  const activeVehicleId = data ? data.activeVehicleId : null;
+  const activeVehicle   = vehicles.find(v => v.id === activeVehicleId) || vehicles[0] || null;
+
+  renderGarageSidebar(vehicles, activeVehicle);
+  renderTopbar(activeVehicle);
+  renderStats(vehicles, sessions);
+  renderGarageOverview(vehicles, activeVehicle);
+  renderSessions(sessions);
+  renderDtcTable(sessions);
+  renderBarChart(sessions);
+  renderActivity(sessions, vehicles);
+  renderAlert(sessions, activeVehicle);
+}
+
+function renderGarageSidebar(vehicles, activeVehicle) {
+  const list = el('garage-list');
+  if (!vehicles.length) {
+    list.innerHTML = '<div style="font-family:var(--fm);font-size:9px;color:var(--t3);text-align:center;padding:10px 0;letter-spacing:1px;">NO VEHICLES</div>';
+    return;
+  }
+  list.innerHTML = vehicles.map(v =>
+    `<div class="vehicle-pill${activeVehicle && v.id === activeVehicle.id ? ' sel' : ''}">
+      <div class="vp-year">${v.year}</div>
+      <div class="vp-name">${v.make} ${v.model}</div>
+      <div class="vp-eng">${v.engine || ''}</div>
+    </div>`
+  ).join('');
+}
+
+function renderTopbar(v) {
+  if (v) {
+    el('vehicle-label').textContent = `${v.year} ${v.make.toUpperCase()} ${v.model.toUpperCase()}`;
+    el('vehicle-sub').textContent   = `${v.engine || ''}${v.vin ? ' · VIN: ' + v.vin : ''} · Synced from AutoDoc`;
+  } else {
+    el('vehicle-label').textContent = 'NO VEHICLE SELECTED';
+    el('vehicle-sub').textContent   = 'Open the AutoDoc app to add a vehicle';
+  }
+}
+
+function renderStats(vehicles, sessions) {
+  const total = sessions.length;
+  const crits = sessions.filter(s => s.severity === 'critical').length;
+  const warns = sessions.filter(s => s.severity === 'warning').length;
+
+  el('stat-sessions-val').textContent = total;
+  el('stat-vehicles-val').textContent = vehicles.length;
+  el('stat-sync').textContent         = 'LIVE';
+
+  const sc = el('stat-sessions');
+  sc.className = 'stat-card ' + (crits > 0 ? 'crit' : warns > 0 ? 'warn' : 'ok');
+
+  const sh = el('stat-health');
+  let healthLabel, healthClass;
+  if (!total) { healthLabel = '—'; healthClass = 'info'; }
+  else if (crits > 0) { healthLabel = 'CRITICAL'; healthClass = 'crit'; }
+  else if (warns > 0) { healthLabel = 'WARNING'; healthClass = 'warn'; }
+  else { healthLabel = 'OK'; healthClass = 'ok'; }
+  el('stat-health-val').textContent = healthLabel;
+  sh.className = 'stat-card ' + healthClass;
+
+  const sv = el('stat-vehicles');
+  sv.className = 'stat-card ' + (vehicles.length > 0 ? 'ok' : 'info');
+}
+
+function renderGarageOverview(vehicles, activeVehicle) {
+  const badge = el('garage-badge');
+  badge.textContent = vehicles.length + ' VEHICLE' + (vehicles.length !== 1 ? 'S' : '');
+  badge.className   = 'panel-badge ' + (vehicles.length > 0 ? 'badge-green' : 'badge-yellow');
+
+  const body = el('garage-overview-body');
+  if (!vehicles.length) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 0;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2;">NO VEHICLES REGISTERED<br/><span style="font-size:9px;opacity:.6">Open AutoDoc app to add your vehicle</span></div>';
+    return;
+  }
+  body.innerHTML = `<div class="health-checks">${vehicles.map(v => {
+    const isActive = activeVehicle && v.id === activeVehicle.id;
+    return `<div class="health-check">
+      <div class="hc-dot" style="background:${isActive ? 'var(--green)' : 'var(--blue)'};box-shadow:0 0 5px ${isActive ? 'var(--green)' : 'var(--blue)'}"></div>
+      <span style="color:var(--t1);font-weight:600">${v.year} ${v.make} ${v.model}</span>
+      ${v.engine ? `<span style="color:var(--t2);font-size:11px;margin-left:4px">· ${v.engine}</span>` : ''}
+      ${isActive ? '<span style="font-family:var(--fm);font-size:8px;color:var(--amber);letter-spacing:1px;margin-left:auto;padding:1px 6px;background:var(--amber-s);border:1px solid var(--amber2);border-radius:2px">ACTIVE</span>' : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function severityClass(sev) {
+  if (sev === 'critical') return 'sev-c';
+  if (sev === 'warning')  return 'sev-w';
+  return 'sev-i';
+}
+function severityColor(sev) {
+  if (sev === 'critical') return 'var(--red)';
+  if (sev === 'warning')  return 'var(--yellow)';
+  return 'var(--blue)';
+}
+function severityDotColor(sev) {
+  if (sev === 'critical') return 'var(--red)';
+  if (sev === 'warning')  return 'var(--yellow)';
+  return 'var(--blue)';
+}
+
+function renderSessions(sessions) {
+  const badge = el('sessions-badge');
+  badge.textContent = sessions.length + ' SESSION' + (sessions.length !== 1 ? 'S' : '');
+  badge.className   = 'panel-badge ' + (sessions.length > 0 ? 'badge-green' : 'badge-yellow');
+
+  const body = el('sessions-body');
+  if (!sessions.length) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 0;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2;">NO SESSIONS YET<br/><span style="font-size:9px;opacity:.6">Start a diagnosis in the AutoDoc app</span></div>';
+    return;
+  }
+  const list = sessions.slice(0, 6).map(s => {
+    const dotCol = severityDotColor(s.severity);
+    return `<div class="activity-item">
+      <div class="activity-dot" style="background:${dotCol}"></div>
+      <div class="activity-text"><strong>${s.title}</strong></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        <div class="activity-time">${s.date}</div>
+        <span class="dtc-sev ${severityClass(s.severity)}" style="font-size:8px">${s.severity.toUpperCase()}</span>
+      </div>
+    </div>`;
+  }).join('');
+  body.innerHTML = `<div class="activity-list">${list}</div>`;
+}
+
+function renderDtcTable(sessions) {
+  const badge = el('dtc-badge');
+  badge.textContent = sessions.length + ' SESSION' + (sessions.length !== 1 ? 'S' : '');
+  badge.className   = 'panel-badge ' + (sessions.some(s => s.severity === 'critical') ? 'badge-red' : sessions.some(s => s.severity === 'warning') ? 'badge-yellow' : 'badge-green');
+
+  const body = el('dtc-body');
+  if (!sessions.length) {
+    body.innerHTML = '<div style="text-align:center;padding:24px;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2;">NO DIAGNOSTIC DATA<br/><span style="font-size:9px;opacity:.6">Run a session in AutoDoc to see results here</span></div>';
+    return;
+  }
+  const rows = sessions.slice(0, 8).map(s => {
+    const msgCount = s.messages ? s.messages.length : 0;
+    const preview  = s.messages && s.messages.length > 1
+      ? s.messages[s.messages.length - 1].content.slice(0, 60) + '…'
+      : '—';
+    return `<tr>
+      <td style="font-family:var(--fm);font-size:11px;color:var(--t2);padding:10px 12px">${s.date}</td>
+      <td style="color:var(--t1);font-weight:600;padding:10px 12px">${s.title}</td>
+      <td style="color:var(--t2);font-size:12px;padding:10px 12px">${msgCount} msg${msgCount !== 1 ? 's' : ''}</td>
+      <td style="padding:10px 12px"><span class="dtc-sev ${severityClass(s.severity)}"><span class="dtc-dot-inline" style="background:${severityDotColor(s.severity)};box-shadow:0 0 4px ${severityDotColor(s.severity)}"></span>${s.severity.toUpperCase()}</span></td>
+      <td style="padding:10px 12px"><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none">OPEN →</a></td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = `<table class="dtc-table"><thead><tr><th>Date</th><th>Topic</th><th>Messages</th><th>Severity</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderBarChart(sessions) {
+  const bc = el('bar-chart');
+  const bl = el('bar-labels');
+  const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  const today = new Date();
+  const todayIdx = (today.getDay() + 6) % 7;
+
+  const counts = new Array(7).fill(0);
+  sessions.forEach(s => {
+    try {
+      const d = new Date(s.date);
+      if (!isNaN(d)) {
+        const diff = Math.round((today - d) / 86400000);
+        if (diff >= 0 && diff < 7) {
+          const idx = (todayIdx - diff + 7) % 7;
+          counts[idx]++;
+        }
+      }
+    } catch {}
+  });
+
+  const maxCount = Math.max(...counts, 1);
+  bc.innerHTML = '';
+  bl.innerHTML = '';
+
+  counts.forEach((c, i) => {
+    const col = document.createElement('div'); col.className = 'bar-col';
+    const bar = document.createElement('div'); bar.className = 'bar';
+    const pct = Math.round((c / maxCount) * 90) + 10;
+    bar.style.cssText = `height:${pct}%;transition:height .8s ${i * .08}s ease;`;
+    const lbl = document.createElement('div'); lbl.className = 'bar-label'; lbl.textContent = c;
+    col.appendChild(bar); col.appendChild(lbl); bc.appendChild(col);
+
+    const dl = document.createElement('span');
+    dl.style.cssText = `font-family:var(--fm);font-size:9px;color:${i === todayIdx ? 'var(--amber)' : 'var(--t3)'}`;
+    dl.textContent = i === todayIdx ? 'TODAY' : days[i];
+    bl.appendChild(dl);
+  });
+}
+
+function renderActivity(sessions, vehicles) {
+  const list = el('activity-list');
+  const items = [];
+
+  sessions.slice(0, 3).forEach(s => {
+    const dotCol = severityDotColor(s.severity);
+    items.push(`<div class="activity-item">
+      <div class="activity-dot" style="background:${dotCol}"></div>
+      <div class="activity-text"><strong>Diagnostic session</strong> — ${s.title}</div>
+      <div class="activity-time">${s.date}</div>
+    </div>`);
+  });
+
+  vehicles.forEach(v => {
+    items.push(`<div class="activity-item">
+      <div class="activity-dot" style="background:var(--blue)"></div>
+      <div class="activity-text"><strong>Vehicle added</strong> — ${v.year} ${v.make} ${v.model}</div>
+      <div class="activity-time">—</div>
+    </div>`);
+  });
+
+  if (!items.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px 0;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;">NO ACTIVITY YET</div>';
+  } else {
+    list.innerHTML = items.slice(0, 5).join('');
+  }
+}
+
+function renderAlert(sessions, vehicle) {
+  const banner = el('alert-banner');
+  const text   = el('alert-text');
+  const crit   = sessions.find(s => s.severity === 'critical');
+  if (crit && vehicle) {
+    text.innerHTML = `<strong>CRITICAL:</strong> Active critical diagnostic session on ${vehicle.year} ${vehicle.make} ${vehicle.model} — "${crit.title}". Immediate attention recommended.`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+renderDashboard();
+
+try {
+  const ch = new BroadcastChannel(AUTODOC_CHANNEL);
+  ch.onmessage = e => {
+    if (e.data && e.data.type === 'garage_update') renderDashboard();
+  };
+} catch {}
+
+window.addEventListener('storage', e => {
+  if (e.key === AUTODOC_STORAGE_KEY) renderDashboard();
 });
 </script>
 </body>

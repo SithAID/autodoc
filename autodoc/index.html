@@ -298,31 +298,44 @@ const QUICK_PROMPTS = [
   'Brake noise when stopping','AC not cooling','Transmission slipping',
 ];
 
+const ACTIVE_DTCS = []; 
+
 const DTC_INFO = {
   'P0300':{ desc:'Random/Multiple Cylinder Misfire', cause:'Spark plugs, ignition coils, fuel injectors, low compression', action:'Check spark plugs and ignition coils first. Run compression test if issue persists.' },
   'P0420':{ desc:'Catalyst System Efficiency Below Threshold (Bank 1)', cause:'Worn catalytic converter, faulty O2 sensors, exhaust leaks', action:'Inspect O2 sensors before replacing catalytic converter — often the sensors are the culprit.' },
   'B1000':{ desc:'ECU Internal Fault', cause:'Software corruption, low battery, water damage to ECU', action:'Clear codes and rescan. If persistent, check battery voltage and ECU ground connections.' },
 };
 
-const INIT_VEHICLES = [
-  { id:1, year:'2019', make:'Toyota', model:'Camry', engine:'2.5L 4-cyl', vin:'4T1B11HK...' },
-  { id:2, year:'2021', make:'Ford', model:'F-150', engine:'3.5L EcoBoost', vin:'1FTEW1EP...' },
-];
+const AUTODOC_STORAGE_KEY = 'autodoc_garage_v1';
+const AUTODOC_CHANNEL     = 'autodoc_sync';
 
-const GAUGES = [
-  { label:'Engine Temp', value:'94', unit:'°C', fill:72, color:'#e05c5c' },
-  { label:'RPM',         value:'780', unit:'rpm', fill:14, color:'#00d68f' },
-  { label:'Battery',     value:'12.6', unit:'V',  fill:85, color:'#00d4ff' },
-  { label:'Fuel',        value:'61', unit:'%',    fill:61, color:'#ffc233' },
-];
+function loadGarageData() {
+  try {
+    const raw = localStorage.getItem(AUTODOC_STORAGE_KEY);
+    if (!raw) return { vehicles: [], activeVehicleId: null, sessions: [] };
+    return JSON.parse(raw);
+  } catch { return { vehicles: [], activeVehicleId: null, sessions: [] }; }
+}
 
-const CHECKLIST = [
-  { icon:'🔵', label:'OBD Port Connected' },
-  { icon:'🟡', label:'Emissions Check Pending' },
-  { icon:'🟢', label:'Brake System OK' },
-  { icon:'🟢', label:'Tyre Pressure OK' },
-  { icon:'🔴', label:'O2 Sensor Fault' },
-];
+function saveGarageData(data) {
+  try {
+    localStorage.setItem(AUTODOC_STORAGE_KEY, JSON.stringify(data));
+    try {
+      const ch = new BroadcastChannel(AUTODOC_CHANNEL);
+      ch.postMessage({ type: 'garage_update', data });
+      ch.close();
+    } catch {}
+  } catch {}
+}
+
+const _saved = loadGarageData();
+const INIT_VEHICLES      = _saved.vehicles || [];
+const INIT_ACTIVE_VID    = _saved.activeVehicleId || null;
+const INIT_SESSIONS      = _saved.sessions || [];
+
+const GAUGES = [];
+
+const CHECKLIST = [];
 
 const TRANSLATIONS = {
   en:{
@@ -541,6 +554,7 @@ function SettingsDrawer({ user, token, onClose, model, setModel, language, setLa
               </div>
             </div>
             <button className="logout-btn" onClick={onLogout}>⏻ LOGOUT</button>
+            <a href="/" style={{display:'block',textAlign:'center',padding:'10px',color:'var(--cyan)',fontFamily:'var(--font-mono)',fontSize:'11px',letterSpacing:'2px',border:'1px solid var(--border-mid)',borderRadius:'4px',marginTop:'8px',textDecoration:'none'}}>← RETURN TO HOME</a>
           </div>
 
           {}
@@ -646,29 +660,31 @@ function DtcDetail({ dtc, onAsk, onClose }) {
 
 /* ── DASHBOARD TAB ── */
 function DashboardTab({ vehicle }) {
-  const label = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'No vehicle selected';
-  const cards = [
-    {label:'ACTIVE DTCS',val:'3',icon:'🔴',type:'crit'},
-    {label:'LAST SCAN',val:'2h',icon:'🕐',type:'info'},
-    {label:'HEALTH SCORE',val:'74%',icon:'💚',type:'ok'},
-    {label:'OPEN TASKS',val:'5',icon:'🔧',type:'warn'},
-    {label:'FUEL RANGE',val:'341km',icon:'⛽',type:'info'},
-    {label:'ENGINE LOAD',val:'18%',icon:'⚙️',type:'ok'},
-  ];
+  const label = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null;
   return (
     <div style={{flex:1,overflow:'auto'}}>
-      <div style={{padding:'14px 20px 0',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--cyan)',letterSpacing:2}}>
-        VEHICLE STATUS — {label.toUpperCase()}
-      </div>
-      <div className="dashboard-grid">
-        {cards.map((c,i)=>(
-          <div key={i} className={`stat-card ${c.type}`}>
-            <div className="stat-icon">{c.icon}</div>
-            <div className="stat-val">{c.val}</div>
-            <div className="stat-lbl">{c.label}</div>
+      {label && (
+        <div style={{padding:'14px 20px 0',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--cyan)',letterSpacing:2}}>
+          VEHICLE STATUS — {label.toUpperCase()}
+        </div>
+      )}
+      {!vehicle ? (
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:12,padding:40,textAlign:'center'}}>
+          <div style={{fontSize:48,opacity:.2}}>🚗</div>
+          <div style={{fontFamily:'var(--font-display)',fontSize:16,letterSpacing:3,color:'var(--text-dim)'}}>NO VEHICLE SELECTED</div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',letterSpacing:1,lineHeight:1.9,opacity:.7}}>
+            ADD A VEHICLE FROM THE SIDEBAR<br/>TO VIEW DIAGNOSTIC STATUS
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'calc(100% - 40px)',gap:12,padding:40,textAlign:'center'}}>
+          <div style={{fontSize:40,opacity:.2}}>📡</div>
+          <div style={{fontFamily:'var(--font-display)',fontSize:14,letterSpacing:3,color:'var(--text-dim)'}}>AWAITING SCAN DATA</div>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',letterSpacing:1,lineHeight:1.9,opacity:.7}}>
+            RUN A DIAGNOSTIC SCAN OR<br/>USE THE CHAT TO DIAGNOSE ISSUES
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -714,16 +730,13 @@ function App() {
   const [messages, setMessages]       = useState([]);
   const [input, setInput]             = useState('');
   const [loading, setLoading]         = useState(false);
-  const [model, setModel]             = useState('chatgpt');
-  const [language, setLanguage]       = useState('en');
+  const [model, setModel]             = useState(() => localStorage.getItem('autodoc_model') || 'chatgpt');
+  const [language, setLanguage]       = useState(() => localStorage.getItem('autodoc_lang') || 'en');
+  const updateModel    = (x) => { setModel(x);    localStorage.setItem('autodoc_model', x); };
+  const updateLanguage = (x) => { setLanguage(x); localStorage.setItem('autodoc_lang', x); };
   const [vehicles, setVehicles]       = useState(INIT_VEHICLES);
-  const [activeVehicleId, setActiveV] = useState(1);
-  const [sessions, setSessions]       = useState([
-    {id:1,title:'Engine misfire P0300',date:'Mar 12',severity:'critical',messages:[]},
-    {id:2,title:'AC compressor noise',date:'Mar 08',severity:'warning',messages:[]},
-    {id:3,title:'Battery drain diagnosis',date:'Feb 28',severity:'info',messages:[]},
-    {id:4,title:'Pre-trip inspection',date:'Feb 20',severity:'ok',messages:[]},
-  ]);
+  const [activeVehicleId, setActiveV] = useState(INIT_ACTIVE_VID);
+  const [sessions, setSessions]       = useState(INIT_SESSIONS);
   const [activeSessionId, setActiveSess] = useState(null);
   const [showAddVehicle, setShowAV]   = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -738,6 +751,10 @@ function App() {
   const textareaRef = useRef(null);
   const t = TRANSLATIONS[language];
   const activeVehicle = vehicles.find(v=>v.id===activeVehicleId) || null;
+
+  useEffect(() => {
+    saveGarageData({ vehicles, activeVehicleId, sessions });
+  }, [vehicles, activeVehicleId, sessions]);
 
   useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:'smooth'}); }, [messages, loading]);
 
@@ -806,14 +823,12 @@ function App() {
     toast(`Loaded: ${sess.title}`,'info',2000);
   };
 
-  /* add vehicle */
   const addVehicle = v => {
     setVehicles(vs=>[...vs,v]);
     setActiveV(v.id);
     toast(`${v.year} ${v.make} ${v.model} added to garage`,'success');
   };
 
-  /* delete vehicle */
   const confirmDelete = () => {
     if(!deleteTarget) return;
     setVehicles(vs=>vs.filter(v=>v.id!==deleteTarget.id));
@@ -1006,15 +1021,26 @@ function App() {
       <aside className="sidebar-right">
         <div className="diag-panel">
           <div className="sidebar-label">Live Telemetry</div>
-          <div className="gauge-row">
-            {GAUGES.map((g,i)=><GaugeCard key={i} {...g}/>)}
-          </div>
+          {GAUGES.length === 0 ? (
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',textAlign:'center',padding:'16px 8px',letterSpacing:1,lineHeight:1.9,background:'var(--bg-surface)',border:'1px solid var(--border-dim)',borderRadius:'var(--radius-sm)',marginBottom:8}}>
+              NO OBD DATA<br/>
+              <span style={{fontSize:8,opacity:.55}}>Connect OBD-II adapter<br/>to view live telemetry</span>
+            </div>
+          ) : (
+            <div className="gauge-row">
+              {GAUGES.map((g,i)=><GaugeCard key={i} {...g}/>)}
+            </div>
+          )}
 
           <div className="sidebar-label" style={{marginTop:16}}>Active Fault Codes</div>
-          <div className="dtc-list">
-            {Object.entries(DTC_INFO).map(([code, info])=>{
-              const level = code==='P0300'?'critical':code==='P0420'?'warning':'info';
-              return (
+          {ACTIVE_DTCS.length === 0 ? (
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',textAlign:'center',padding:'14px 8px',letterSpacing:1,lineHeight:1.9,background:'var(--bg-surface)',border:'1px solid var(--border-dim)',borderRadius:'var(--radius-sm)'}}>
+              <span style={{fontSize:20,display:'block',marginBottom:4,opacity:.3}}>✓</span>
+              NO ACTIVE DTCS
+            </div>
+          ) : (
+            <div className="dtc-list">
+              {ACTIVE_DTCS.map(({code, info, level})=>(
                 <React.Fragment key={code}>
                   <div className="dtc-item" onClick={()=>setActiveDtc(activeDtc===code?null:code)}>
                     <div className={`dtc-indicator ${level}`}/>
@@ -1029,25 +1055,31 @@ function App() {
                     />
                   )}
                 </React.Fragment>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="sidebar-label" style={{marginTop:16}}>System Checklist</div>
-          <div className="checklist">
-            {CHECKLIST.map((c,i)=>(
-              <div key={i} className="check-item">
-                <span className="check-icon">{c.icon}</span><span>{c.label}</span>
-              </div>
-            ))}
-          </div>
+          {CHECKLIST.length === 0 ? (
+            <div style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--text-dim)',textAlign:'center',padding:'14px 8px',letterSpacing:1,opacity:.5}}>
+              NO CHECKLIST ITEMS
+            </div>
+          ) : (
+            <div className="checklist">
+              {CHECKLIST.map((c,i)=>(
+                <div key={i} className="check-item">
+                  <span className="check-icon">{c.icon}</span><span>{c.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </aside>
 
       {/* ── MODALS ── */}
       {showAddVehicle && <AddVehicleModal onClose={()=>setShowAV(false)} onAdd={addVehicle}/>}
       {deleteTarget   && <DeleteVehicleModal vehicle={deleteTarget} onClose={()=>setDeleteTarget(null)} onConfirm={confirmDelete}/>}
-      {showSettings && <SettingsDrawer user={user} token={authToken||getCookie(COOKIE_NAME)} onClose={()=>setShowSett(false)} model={model} setModel={setModel} language={language} setLanguage={setLanguage} apiKeys={apiKeys} onSaveKeys={k=>setApiKeys(k)} onLogout={()=>{ deleteCookie(COOKIE_NAME); setUser(null); setAuthToken(null); setShowSett(false); }} toast={toast}/>}
+      {showSettings && <SettingsDrawer user={user} token={authToken||getCookie(COOKIE_NAME)} onClose={()=>setShowSett(false)} model={model} setModel={updateModel} language={language} setLanguage={updateLanguage} apiKeys={apiKeys} onSaveKeys={k=>setApiKeys(k)} onLogout={()=>{ deleteCookie(COOKIE_NAME); setUser(null); setAuthToken(null); setShowSett(false); }} toast={toast}/>}
 
       <ToastContainer toasts={toasts}/>
     </div>

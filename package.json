@@ -1,14 +1,12 @@
 {
-  "name": "autodoc",
-  "version": "3.0.0",
-  "private": true,
+  "name": "autodoc-web-app",
+  "version": "1.0.0",
+  "main": "server.js",
   "scripts": {
-    "start": "node start.js",
-    "dev": "node start.js",
-    "deploy": "wrangler pages deploy .",
-    "kv:create": "wrangler kv namespace create USERS_KV"
+    "start": "node server.js"
   },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
+  "dependencies": {
+    "express": "^4.18.2",
+    "wrangler": "^4.77.0"
   }
 }
