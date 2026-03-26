@@ -257,20 +257,60 @@ async function callChatGPT(msg, lang, hist, key, env) {
   }
 }
 
+let geminiModelCache = null;
+let geminiCacheTime  = 0;
+
+async function getAvailableGeminiModels(k) {
+  const now = Date.now();
+  if (geminiModelCache && now - geminiCacheTime < 10 * 60 * 1000) return geminiModelCache;
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models', {
+      headers: { 'x-goog-api-key': k },
+    });
+    if (!r.ok) return null;
+    const data   = await r.json();
+    const models = (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => m.name.replace('models/', ''));
+
+    const priority = [
+      'gemini-2.0-flash-exp',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro',
+      'gemini-1.5-pro-latest',
+    ];
+    const sorted = [
+      ...priority.filter(p => models.includes(p)),
+      ...models.filter(m => m.includes('flash') && !priority.includes(m)),
+      ...models.filter(m => !m.includes('flash') && !priority.includes(m) && !m.includes('embedding') && !m.includes('aqa')),
+    ];
+    if (sorted.length > 0) {
+      geminiModelCache = sorted;
+      geminiCacheTime  = now;
+      return sorted;
+    }
+  } catch {}
+  return null;
+}
+
 async function callGemini(msg, lang, hist, key, env) {
   const k = key || env.GEMINI_API_KEY;
   if (!k) throw new Error('Gemini key not configured');
-  const fh     = hist.slice(-10).map(m => ({ parts: [{ text: m.content }], role: m.role === 'assistant' ? 'model' : 'user' }));
-  const models = ['gemini-2.0-flash-exp', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
+
+  const fh = hist.slice(-10).map(m => ({ parts: [{ text: m.content }], role: m.role === 'assistant' ? 'model' : 'user' }));
+
+  const dynamicModels = await getAvailableGeminiModels(k);
+  const models = dynamicModels || ['gemini-2.0-flash-exp', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
+
   let lastError = null;
   for (let i = 0; i < models.length; i++) {
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': k,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k },
         body: JSON.stringify({
           contents: [{ parts: [{ text: SYSTEM_PROMPTS[lang] }], role: 'user' }, ...fh, { parts: [{ text: msg }], role: 'user' }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 700 },
@@ -281,12 +321,17 @@ async function callGemini(msg, lang, hist, key, env) {
       const ec = e.error?.code;
       const es = e.error?.status || '';
       const em = e.error?.message || '';
-      if (ec === 429 || es === 'RESOURCE_EXHAUSTED' || em.includes('quota')) { lastError = new Error(`${models[i]}: quota exceeded`); continue; }
-      if (ec === 404 || es === 'NOT_FOUND' || em.includes('not found') || em.includes('not supported')) { lastError = new Error(`${models[i]}: not available`); continue; }
+      if (ec === 429 || es === 'RESOURCE_EXHAUSTED' || em.includes('quota') || em.includes('rate')) {
+        lastError = new Error(`${models[i]}: quota exceeded`); continue;
+      }
+      if (ec === 404 || es === 'NOT_FOUND' || em.includes('not found') || em.includes('not supported') || em.includes('deprecated')) {
+        geminiModelCache = null;
+        lastError = new Error(`${models[i]}: not available`); continue;
+      }
       throw new Error(em || 'Gemini error');
     } catch(fe) { lastError = fe; if (i < models.length - 1) continue; }
   }
-  throw lastError || new Error('All Gemini models quota exceeded');
+  throw lastError || new Error('All Gemini models failed. Check your API key or try again later.');
 }
 
 async function callGrok(msg, lang, hist, key, env) {
