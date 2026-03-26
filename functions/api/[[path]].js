@@ -265,14 +265,16 @@ async function callGemini(msg, lang, hist, key, env) {
   let lastError = null;
   for (let i = 0; i < models.length; i++) {
     try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent?key=${k}`, {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': k,
+        },
         body: JSON.stringify({
           contents: [{ parts: [{ text: SYSTEM_PROMPTS[lang] }], role: 'user' }, ...fh, { parts: [{ text: msg }], role: 'user' }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 700 },
         }),
-        cf: { cacheEverything: false, cacheTtl: 0 },
       });
       if (r.ok) return (await r.json()).candidates[0].content.parts[0].text;
       const e  = await r.json();
