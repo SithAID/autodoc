@@ -185,11 +185,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);
   
   <aside class="dash-sidebar">
     <div class="sidebar-section-label">Navigation</div>
-    <a class="sidebar-nav-item active" href="/dashboard/"><span class="sidebar-nav-icon">📊</span>Overview</a>
+    <a class="sidebar-nav-item active" data-section="overview" href="#"><span class="sidebar-nav-icon">📊</span>Overview</a>
     <a class="sidebar-nav-item" href="/autodoc/"><span class="sidebar-nav-icon">⚡</span>Diagnostic Chat</a>
-    <a class="sidebar-nav-item" href="#"><span class="sidebar-nav-icon">🔍</span>Fault Codes</a>
-    <a class="sidebar-nav-item" href="#"><span class="sidebar-nav-icon">📈</span>Telemetry</a>
-    <a class="sidebar-nav-item" href="#"><span class="sidebar-nav-icon">🗓️</span>Service History</a>
+    <a class="sidebar-nav-item" data-section="faultcodes" href="#"><span class="sidebar-nav-icon">🔍</span>Fault Codes</a>
+    <a class="sidebar-nav-item" data-section="telemetry" href="#"><span class="sidebar-nav-icon">📈</span>Telemetry</a>
+    <a class="sidebar-nav-item" data-section="history" href="#"><span class="sidebar-nav-icon">🗓️</span>Service History</a>
 
     <div class="sidebar-section-label" style="margin-top:12px;">Garage</div>
     <div id="garage-list"></div>
@@ -214,6 +214,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);
       </div>
     </div>
 
+    <div id="section-overview">
     <div class="stat-row">
       <div class="stat-card" id="stat-sessions"><div class="stat-icon">💬</div><div class="stat-val" id="stat-sessions-val">0</div><div class="stat-lbl">Diagnostic Sessions</div></div>
       <div class="stat-card" id="stat-health"><div class="stat-icon">💚</div><div class="stat-val" id="stat-health-val">—</div><div class="stat-lbl">Overall Status</div></div>
@@ -264,6 +265,55 @@ nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(6,7,9,.92);
         <div class="panel-body" style="padding:4px 16px;">
           <div class="activity-list" id="activity-list">
             <div style="text-align:center;padding:20px 0;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;">NO ACTIVITY YET</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div id="section-faultcodes" style="display:none;">
+      <div class="panel-card" style="margin-bottom:20px;">
+        <div class="panel-header"><span class="panel-title">🔍 Fault Codes</span><span class="panel-badge" id="fc-badge">0 CODES</span></div>
+        <div class="panel-body" style="padding:0;" id="fc-body">
+          <div style="text-align:center;padding:40px 24px;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2.2;">
+            NO FAULT CODES DETECTED<br/>
+            <span style="font-size:9px;opacity:.6">OBD-II fault codes will appear here after a diagnostic session</span><br/>
+            <a href="/autodoc/" style="display:inline-block;margin-top:16px;padding:8px 20px;background:var(--amber-s);border:1px solid var(--amber2);border-radius:var(--r1);color:var(--amber);font-family:var(--fm);font-size:9px;letter-spacing:2px;text-decoration:none;">⚡ START DIAGNOSIS</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-telemetry" style="display:none;">
+      <div class="stat-row" style="margin-bottom:20px;">
+        <div class="stat-card info"><div class="stat-icon">🌡️</div><div class="stat-val" style="font-size:24px;">—</div><div class="stat-lbl">Engine Temp</div></div>
+        <div class="stat-card info"><div class="stat-icon">⚙️</div><div class="stat-val" style="font-size:24px;">—</div><div class="stat-lbl">RPM</div></div>
+        <div class="stat-card info"><div class="stat-icon">🔋</div><div class="stat-val" style="font-size:24px;">—</div><div class="stat-lbl">Battery (V)</div></div>
+        <div class="stat-card info"><div class="stat-icon">⛽</div><div class="stat-val" style="font-size:24px;">—</div><div class="stat-lbl">Fuel Level</div></div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-header"><span class="panel-title">📈 Live Telemetry</span></div>
+        <div class="panel-body" style="text-align:center;padding:40px 24px;">
+          <div style="font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2.2;">
+            LIVE OBD-II TELEMETRY — COMING SOON<br/>
+            <span style="font-size:9px;opacity:.6">Real-time sensor data via Bluetooth OBD-II adapter is planned for a future update</span><br/>
+            <div style="margin-top:20px;padding:14px 20px;background:var(--surface);border:1px solid var(--b2);border-radius:var(--r2);display:inline-block;text-align:left;">
+              <div style="font-size:9px;color:var(--amber);letter-spacing:2px;margin-bottom:8px;">ROADMAP</div>
+              <div style="font-size:11px;color:var(--t2);line-height:2;">Q2 2026 — Bluetooth OBD-II adapter support<br/>Q3 2026 — Real-time sensor dashboard<br/>Q4 2026 — AI anomaly detection from live data</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-history" style="display:none;">
+      <div class="panel-card">
+        <div class="panel-header"><span class="panel-title">🗓️ Service History</span><span class="panel-badge" id="hist-badge">0 RECORDS</span></div>
+        <div class="panel-body" style="padding:0;" id="hist-body">
+          <div style="text-align:center;padding:40px 24px;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2.2;">
+            NO SERVICE RECORDS YET<br/>
+            <span style="font-size:9px;opacity:.6">Your diagnostic sessions will appear here as a service history timeline</span><br/>
+            <a href="/autodoc/" style="display:inline-block;margin-top:16px;padding:8px 20px;background:var(--amber-s);border:1px solid var(--amber2);border-radius:var(--r1);color:var(--amber);font-family:var(--fm);font-size:9px;letter-spacing:2px;text-decoration:none;">⚡ START DIAGNOSIS</a>
           </div>
         </div>
       </div>
@@ -523,6 +573,102 @@ function renderAlert(sessions, vehicle) {
 }
 
 renderDashboard();
+
+document.querySelectorAll('.sidebar-nav-item[data-section]').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = this.dataset.section;
+    document.querySelectorAll('.sidebar-nav-item[data-section]').forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+    ['overview','faultcodes','telemetry','history'].forEach(s => {
+      const el = document.getElementById('section-' + s);
+      if (el) el.style.display = s === target ? '' : 'none';
+    });
+  });
+});
+
+function renderFaultCodes(sessions) {
+  const allCodes = [];
+  sessions.forEach(s => {
+    const text = (s.title + ' ' + (s.messages||[]).map(m=>m.content).join(' '));
+    const found = text.match(/\b([PBCU]\d{4})\b/g) || [];
+    found.forEach(code => {
+      if (!allCodes.find(c=>c.code===code)) {
+        allCodes.push({ code, session: s.title, severity: s.severity, date: s.date });
+      }
+    });
+  });
+  const badge = document.getElementById('fc-badge');
+  const body  = document.getElementById('fc-body');
+  if (!badge || !body) return;
+  badge.textContent  = allCodes.length + ' CODE' + (allCodes.length !== 1 ? 'S' : '');
+  badge.className    = 'panel-badge ' + (allCodes.some(c=>c.severity==='critical') ? 'badge-red' : allCodes.length ? 'badge-yellow' : 'badge-green');
+  if (!allCodes.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px 24px;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2.2;">NO FAULT CODES DETECTED<br/><span style="font-size:9px;opacity:.6">OBD-II fault codes will appear here after a diagnostic session</span><br/><a href="/autodoc/" style="display:inline-block;margin-top:16px;padding:8px 20px;background:var(--amber-s);border:1px solid var(--amber2);border-radius:var(--r1);color:var(--amber);font-family:var(--fm);font-size:9px;letter-spacing:2px;text-decoration:none;">⚡ START DIAGNOSIS</a></div>';
+    return;
+  }
+  const rows = allCodes.map(c => `<tr>
+    <td style="font-family:var(--fm);font-size:13px;font-weight:700;color:var(--amber);padding:10px 12px;letter-spacing:1px;">${c.code}</td>
+    <td style="padding:10px 12px;color:var(--t1);">${c.session}</td>
+    <td style="padding:10px 12px;"><span class="dtc-sev ${severityClass(c.severity)}">${c.severity.toUpperCase()}</span></td>
+    <td style="font-family:var(--fm);font-size:10px;color:var(--t3);padding:10px 12px;">${c.date}</td>
+    <td style="padding:10px 12px;"><a href="/autodoc/" style="color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none;">DIAGNOSE →</a></td>
+  </tr>`).join('');
+  body.innerHTML = `<table class="dtc-table"><thead><tr><th>Code</th><th>Session</th><th>Severity</th><th>Date</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderServiceHistory(sessions) {
+  const badge = document.getElementById('hist-badge');
+  const body  = document.getElementById('hist-body');
+  if (!badge || !body) return;
+  badge.textContent = sessions.length + ' RECORD' + (sessions.length !== 1 ? 'S' : '');
+  badge.className   = 'panel-badge ' + (sessions.length ? 'badge-green' : 'badge-yellow');
+  if (!sessions.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px 24px;font-family:var(--fm);font-size:10px;color:var(--t3);letter-spacing:1.5px;line-height:2.2;">NO SERVICE RECORDS YET<br/><span style="font-size:9px;opacity:.6">Your diagnostic sessions will appear here as a service history timeline</span><br/><a href="/autodoc/" style="display:inline-block;margin-top:16px;padding:8px 20px;background:var(--amber-s);border:1px solid var(--amber2);border-radius:var(--r1);color:var(--amber);font-family:var(--fm);font-size:9px;letter-spacing:2px;text-decoration:none;">⚡ START DIAGNOSIS</a></div>';
+    return;
+  }
+  const items = sessions.map((s,i) => {
+    const dotCol = severityDotColor(s.severity);
+    const msgCount = s.messages ? s.messages.length : 0;
+    return `<div style="display:flex;gap:16px;padding:16px 20px;border-bottom:1px solid var(--b1);">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+        <div style="width:12px;height:12px;border-radius:50%;background:${dotCol};box-shadow:0 0 6px ${dotCol};flex-shrink:0;margin-top:3px;"></div>
+        ${i < sessions.length-1 ? `<div style="width:1px;flex:1;background:var(--b2);margin:4px 0;min-height:32px;"></div>` : ''}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+          <span style="font-weight:700;color:var(--t1);font-size:13px;">${s.title}</span>
+          <span class="dtc-sev ${severityClass(s.severity)}" style="font-size:8px;">${s.severity.toUpperCase()}</span>
+        </div>
+        <div style="font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:.5px;">${s.date} · ${msgCount} message${msgCount!==1?'s':''}</div>
+        ${s.messages && s.messages.length > 1 ? `<div style="margin-top:6px;font-size:12px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.messages[s.messages.length-1].content.slice(0,80)}…</div>` : ''}
+      </div>
+      <a href="/autodoc/" style="flex-shrink:0;color:var(--amber);font-family:var(--fm);font-size:10px;letter-spacing:1px;text-decoration:none;align-self:center;">OPEN →</a>
+    </div>`;
+  }).join('');
+  body.innerHTML = items;
+}
+
+const _origRender = renderDashboard;
+function renderDashboard() {
+  const data = loadGarageData();
+  const vehicles = data ? (data.vehicles || []) : [];
+  const sessions = data ? (data.sessions || []) : [];
+  const activeVehicleId = data ? data.activeVehicleId : null;
+  const activeVehicle   = vehicles.find(v => v.id === activeVehicleId) || vehicles[0] || null;
+
+  renderGarageSidebar(vehicles, activeVehicle);
+  renderTopbar(activeVehicle);
+  renderStats(vehicles, sessions);
+  renderGarageOverview(vehicles, activeVehicle);
+  renderSessions(sessions);
+  renderDtcTable(sessions);
+  renderBarChart(sessions);
+  renderActivity(sessions, vehicles);
+  renderAlert(sessions, activeVehicle);
+  renderFaultCodes(sessions);
+  renderServiceHistory(sessions);
+}
 
 try {
   const ch = new BroadcastChannel(AUTODOC_CHANNEL);
